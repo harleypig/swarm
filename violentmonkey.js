@@ -309,31 +309,69 @@
                     // Try multiple approaches to trigger the purchase
                     console.log(`Attempting purchase for ${unitName}`);
 
-                    // First try: Get scope from the dropdown component itself
-                    try {
-                        const dropdownScope = angular.element(dropdown).scope();
-                        if (dropdownScope && dropdownScope.buyMaxUnit) {
-                            console.log(`Calling dropdownScope.buyMaxUnit for ${unitName}`);
-                            dropdownScope.buyMaxUnit({unit: dropdownScope.unit, percent: 1});
-                            console.log(`Successfully called dropdown scope function for ${unitName}`);
-                        } else if (dropdownScope && dropdownScope.buyUnit) {
-                            console.log(`Calling dropdownScope.buyUnit for ${unitName}`);
-                            dropdownScope.buyUnit({unit: dropdownScope.unit, num: dropdownScope.fullnum()});
-                            console.log(`Successfully called dropdown scope function for ${unitName}`);
-                        } else {
-                            throw new Error('No dropdown scope functions found');
+                    // Try to get scope from various elements
+                    let scope = null;
+                    const elementsToTry = [dropdown, unitRow, dropdown.parentElement];
+                    
+                    for (let element of elementsToTry) {
+                        if (element) {
+                            const testScope = angular.element(element).scope();
+                            if (testScope && (testScope.buyMaxUnit || testScope.buyUnit)) {
+                                scope = testScope;
+                                console.log(`Found working scope on ${element.tagName} for ${unitName}`);
+                                break;
+                            }
                         }
-                    } catch (e) {
-                        console.log(`Dropdown scope call failed for ${unitName}, trying click:`, e.message);
+                    }
 
-                        // Second try: Simulate click with jQuery if available
+                    // First try: Direct Angular scope call
+                    if (scope) {
+                        try {
+                            if (buyMaxButton.getAttribute('ng-click').includes('buyMaxUnit')) {
+                                console.log(`Calling scope.buyMaxUnit for ${unitName}`);
+                                scope.buyMaxUnit({unit: scope.unit, percent: 1});
+                            } else {
+                                console.log(`Calling scope.buyUnit for ${unitName}`);
+                                scope.buyUnit({unit: scope.unit, num: scope.fullnum()});
+                            }
+                            console.log(`Successfully called scope function for ${unitName}`);
+                        } catch (e) {
+                            console.log(`Scope call failed for ${unitName}:`, e.message);
+                            scope = null; // Fall back to clicks
+                        }
+                    }
+
+                    // If scope method failed, try click methods
+                    if (!scope) {
+                        console.log(`No working scope found for ${unitName}, trying clicks`);
+                        
+                        // Try jQuery click with more specific targeting
                         if (window.jQuery) {
                             console.log(`Using jQuery click for ${unitName}`);
-                            window.jQuery(buyMaxButton).trigger('click');
+                            const $button = window.jQuery(buyMaxButton);
+                            $button.trigger('click');
+                            
+                            // Also try triggering the mousedown/mouseup events
+                            setTimeout(() => {
+                                $button.trigger('mousedown').trigger('mouseup');
+                            }, 50);
                         } else {
-                            // Third try: Regular click
-                            console.log(`Using regular click for ${unitName}`);
+                            // Try multiple click events
+                            console.log(`Using multiple click events for ${unitName}`);
                             buyMaxButton.click();
+                            
+                            // Try dispatching different event types
+                            setTimeout(() => {
+                                const events = ['mousedown', 'mouseup', 'click'];
+                                events.forEach(eventType => {
+                                    const event = new MouseEvent(eventType, {
+                                        bubbles: true,
+                                        cancelable: true,
+                                        view: window
+                                    });
+                                    buyMaxButton.dispatchEvent(event);
+                                });
+                            }, 50);
                         }
                     }
 
