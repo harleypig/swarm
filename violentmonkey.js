@@ -250,29 +250,63 @@
         
         // Wait a moment, then find and click the buy max button
         setTimeout(() => {
-            // Look for the buy max button with the exact ng-click from the HTML
-            const buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:1})"]');
+            // Look for all available buy buttons in the dropdown
+            const allBuyButtons = dropdown.querySelectorAll('a[ng-click*="buyMaxUnit"], a[ng-click*="buyUnit"]');
+            console.log(`Found ${allBuyButtons.length} buy buttons for ${getUnitNameFromRow(unitRow)}`);
+            
+            // Try to find the max buy button (percent:1) first
+            let buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:1})"]');
+            
+            // If no max button, try the regular buy button
+            if (!buyMaxButton) {
+                buyMaxButton = dropdown.querySelector('a[ng-click="buyUnit({unit:unit, num:fullnum()})"]');
+                console.log(`Using regular buy button instead of max for ${getUnitNameFromRow(unitRow)}`);
+            }
+            
             if (buyMaxButton) {
                 // Check if the parent li is disabled
                 const parentLi = buyMaxButton.closest('li');
                 if (parentLi && !parentLi.classList.contains('disabled')) {
                     const unitName = getUnitNameFromRow(unitRow);
-                    console.log(`Clicking buy max button for ${unitName}`);
-                    buyMaxButton.click();
+                    console.log(`Clicking buy button for ${unitName}: ${buyMaxButton.getAttribute('ng-click')}`);
+                    
+                    // Try triggering the Angular click event directly
+                    const angularElement = angular.element(buyMaxButton);
+                    if (angularElement && angularElement.scope) {
+                        const scope = angularElement.scope();
+                        if (scope) {
+                            // Try to call the function directly from scope
+                            try {
+                                if (buyMaxButton.getAttribute('ng-click').includes('buyMaxUnit')) {
+                                    scope.buyMaxUnit({unit: scope.unit, percent: 1});
+                                } else {
+                                    scope.buyUnit({unit: scope.unit, num: scope.fullnum()});
+                                }
+                                console.log(`Successfully called Angular function for ${unitName}`);
+                            } catch (e) {
+                                console.log(`Angular function call failed for ${unitName}, trying regular click:`, e);
+                                buyMaxButton.click();
+                            }
+                        } else {
+                            buyMaxButton.click();
+                        }
+                    } else {
+                        buyMaxButton.click();
+                    }
                     
                     // Close the dropdown after clicking
                     setTimeout(() => {
                         document.body.click();
-                    }, 50);
+                    }, 100);
                 } else {
-                    console.log(`Buy max button disabled for ${getUnitNameFromRow(unitRow)}`);
+                    console.log(`Buy button disabled for ${getUnitNameFromRow(unitRow)}`);
                 }
             } else {
-                console.log(`Buy max button not found for ${getUnitNameFromRow(unitRow)}`);
+                console.log(`No buy buttons found for ${getUnitNameFromRow(unitRow)}`);
                 // Close dropdown if button not found
                 document.body.click();
             }
-        }, CONFIG.DROPDOWN_OPEN_DELAY * 2); // Increase delay to ensure dropdown is fully open
+        }, CONFIG.DROPDOWN_OPEN_DELAY * 3); // Increase delay even more
         
         return true;
     }
