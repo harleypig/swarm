@@ -309,53 +309,144 @@
                     // Try multiple approaches to trigger the purchase
                     console.log(`Attempting purchase for ${unitName}`);
 
-                    // Use Angular's $compile service to trigger the ng-click
-                    console.log(`Triggering Angular click for ${unitName}`);
+                    // Try multiple purchase methods in sequence
+                    console.log(`Attempting purchase for ${unitName}`);
 
-                    try {
-                        // Get the Angular element and trigger the click through Angular
-                        const $element = angular.element(buyMaxButton);
-                        const scope = $element.scope();
+                    // Method 1: Try different event types and timing
+                    function tryEventSequence() {
+                        console.log(`Trying event sequence for ${unitName}`);
+                        const events = [
+                            { type: 'mouseenter', bubbles: true },
+                            { type: 'mouseover', bubbles: true },
+                            { type: 'mousedown', bubbles: true, button: 0 },
+                            { type: 'focus', bubbles: false },
+                            { type: 'mouseup', bubbles: true, button: 0 },
+                            { type: 'click', bubbles: true, button: 0 }
+                        ];
 
-                        if (scope) {
-                            // Manually evaluate the ng-click expression
-                            const ngClick = buyMaxButton.getAttribute('ng-click');
-                            console.log(`Evaluating ng-click: ${ngClick} for ${unitName}`);
-
-                            // Use Angular's $eval to execute the expression
-                            scope.$eval(ngClick);
-                            scope.$apply(); // Trigger digest cycle
-
-                            console.log(`Successfully executed ng-click for ${unitName}`);
-                        } else {
-                            throw new Error('No scope found');
-                        }
-                    } catch (e) {
-                        console.log(`Angular evaluation failed for ${unitName}, trying direct click:`, e.message);
-
-                        // Fallback: Try to trigger the click event more aggressively
-                        console.log(`Using aggressive click simulation for ${unitName}`);
-
-                        // Focus the element first
-                        buyMaxButton.focus();
-
-                        // Create a more complete click event
-                        const clickEvent = new MouseEvent('click', {
-                            view: window,
-                            bubbles: true,
-                            cancelable: true,
-                            clientX: buyMaxButton.getBoundingClientRect().left + 5,
-                            clientY: buyMaxButton.getBoundingClientRect().top + 5
+                        events.forEach((eventConfig, index) => {
+                            setTimeout(() => {
+                                const event = new MouseEvent(eventConfig.type, {
+                                    view: window,
+                                    bubbles: eventConfig.bubbles,
+                                    cancelable: true,
+                                    button: eventConfig.button || 0
+                                });
+                                buyMaxButton.dispatchEvent(event);
+                            }, index * 10);
                         });
+                    }
 
-                        buyMaxButton.dispatchEvent(clickEvent);
-
-                        // Also try the href if it exists
-                        const href = buyMaxButton.getAttribute('href');
-                        if (href && href !== 'javascript:') {
-                            console.log(`Following href for ${unitName}: ${href}`);
-                            window.location.href = href;
+                    // Method 2: Use jQuery's more powerful event system
+                    function tryJQueryEvents() {
+                        console.log(`Trying jQuery events for ${unitName}`);
+                        if (window.jQuery) {
+                            const $button = window.jQuery(buyMaxButton);
+                            
+                            $button.focus()
+                                   .trigger('mouseenter')
+                                   .trigger('mouseover') 
+                                   .trigger('mousedown')
+                                   .trigger('mouseup')
+                                   .trigger('click')
+                                   .trigger('change');
+                                   
+                            // Also try triggering with event data
+                            $button.trigger('click', [{ synthetic: true }]);
                         }
+                    }
+
+                    // Method 3: Try to access Angular scope from parent elements
+                    function tryParentScope() {
+                        console.log(`Trying parent scope for ${unitName}`);
+                        let workingScope = null;
+                        let currentElement = buyMaxButton;
+
+                        while (currentElement && !workingScope) {
+                            try {
+                                const scope = angular.element(currentElement).scope();
+                                if (scope && (scope.buyMaxUnit || scope.buyUnit)) {
+                                    workingScope = scope;
+                                    console.log(`Found working scope on ${currentElement.tagName} for ${unitName}`);
+                                    break;
+                                }
+                            } catch (e) {}
+                            currentElement = currentElement.parentElement;
+                        }
+
+                        if (workingScope) {
+                            try {
+                                const ngClick = buyMaxButton.getAttribute('ng-click');
+                                console.log(`Evaluating ng-click via parent scope: ${ngClick} for ${unitName}`);
+                                workingScope.$eval(ngClick);
+                                workingScope.$apply();
+                                console.log(`Successfully executed ng-click via parent scope for ${unitName}`);
+                                return true;
+                            } catch (e) {
+                                console.log(`Parent scope evaluation failed for ${unitName}:`, e.message);
+                            }
+                        } else {
+                            console.log(`No working parent scope found for ${unitName}`);
+                        }
+                        return false;
+                    }
+
+                    // Method 4: Simulate exact Bootstrap dropdown behavior
+                    function tryBootstrapDropdown() {
+                        console.log(`Trying Bootstrap dropdown simulation for ${unitName}`);
+                        
+                        setTimeout(() => {
+                            if (dropdown.classList.contains('open')) {
+                                const dropdownScope = angular.element(dropdown).scope();
+                                if (dropdownScope) {
+                                    try {
+                                        if (buyMaxButton.getAttribute('ng-click').includes('buyMaxUnit')) {
+                                            dropdownScope.buyMaxUnit({unit: dropdownScope.unit, percent: 1});
+                                        } else {
+                                            dropdownScope.buyUnit({unit: dropdownScope.unit, num: dropdownScope.fullnum()});
+                                        }
+                                        dropdownScope.$apply();
+                                        console.log(`Bootstrap dropdown method succeeded for ${unitName}`);
+                                        return true;
+                                    } catch (e) {
+                                        console.log(`Bootstrap dropdown method failed for ${unitName}:`, e.message);
+                                    }
+                                }
+                            }
+                            return false;
+                        }, 100);
+                    }
+
+                    // Method 5: Use browser's native form submission
+                    function tryFormSubmission() {
+                        console.log(`Trying form submission for ${unitName}`);
+                        
+                        const form = buyMaxButton.closest('form');
+                        if (form) {
+                            form.submit();
+                        } else {
+                            const href = buyMaxButton.getAttribute('href');
+                            if (href && href !== 'javascript:' && href !== 'javascript:void(0)') {
+                                console.log(`Following href for ${unitName}: ${href}`);
+                                window.location.href = href;
+                            } else {
+                                // Create a temporary form and submit
+                                const tempForm = document.createElement('form');
+                                tempForm.style.display = 'none';
+                                tempForm.action = 'javascript:void(0)';
+                                document.body.appendChild(tempForm);
+                                tempForm.submit();
+                                document.body.removeChild(tempForm);
+                            }
+                        }
+                    }
+
+                    // Try methods in sequence (comment/uncomment as needed)
+                    // tryEventSequence();
+                    // tryJQueryEvents();
+                    if (!tryParentScope()) {
+                        // tryBootstrapDropdown();
+                        // tryFormSubmission();
                     }
 
                     // Close the dropdown after clicking
