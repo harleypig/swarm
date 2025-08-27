@@ -274,14 +274,20 @@
 
                     // Try triggering the Angular click event directly
                     const angularElement = angular.element(buyMaxButton);
+                    console.log(`Angular element found for ${unitName}:`, !!angularElement);
+                    
                     if (angularElement && angularElement.scope) {
                         const scope = angularElement.scope();
+                        console.log(`Scope found for ${unitName}:`, !!scope);
+                        
                         if (scope) {
                             // Try to call the function directly from scope
                             try {
                                 if (buyMaxButton.getAttribute('ng-click').includes('buyMaxUnit')) {
+                                    console.log(`Calling buyMaxUnit for ${unitName}`);
                                     scope.buyMaxUnit({unit: scope.unit, percent: 1});
                                 } else {
+                                    console.log(`Calling buyUnit for ${unitName}`);
                                     scope.buyUnit({unit: scope.unit, num: scope.fullnum()});
                                 }
                                 console.log(`Successfully called Angular function for ${unitName}`);
@@ -295,9 +301,11 @@
                                 }
                             }
                         } else {
+                            console.log(`No scope found for ${unitName}, using regular click`);
                             buyMaxButton.click();
                         }
                     } else {
+                        console.log(`No Angular element found for ${unitName}, using regular click`);
                         buyMaxButton.click();
                     }
 
