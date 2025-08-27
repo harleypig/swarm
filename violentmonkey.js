@@ -309,69 +309,52 @@
                     // Try multiple approaches to trigger the purchase
                     console.log(`Attempting purchase for ${unitName}`);
 
-                    // Try to get scope from various elements
-                    let scope = null;
-                    const elementsToTry = [dropdown, unitRow, dropdown.parentElement];
-
-                    for (let element of elementsToTry) {
-                        if (element) {
-                            const testScope = angular.element(element).scope();
-                            if (testScope && (testScope.buyMaxUnit || testScope.buyUnit)) {
-                                scope = testScope;
-                                console.log(`Found working scope on ${element.tagName} for ${unitName}`);
-                                break;
-                            }
-                        }
-                    }
-
-                    // First try: Direct Angular scope call
-                    if (scope) {
-                        try {
-                            if (buyMaxButton.getAttribute('ng-click').includes('buyMaxUnit')) {
-                                console.log(`Calling scope.buyMaxUnit for ${unitName}`);
-                                scope.buyMaxUnit({unit: scope.unit, percent: 1});
-                            } else {
-                                console.log(`Calling scope.buyUnit for ${unitName}`);
-                                scope.buyUnit({unit: scope.unit, num: scope.fullnum()});
-                            }
-                            console.log(`Successfully called scope function for ${unitName}`);
-                        } catch (e) {
-                            console.log(`Scope call failed for ${unitName}:`, e.message);
-                            scope = null; // Fall back to clicks
-                        }
-                    }
-
-                    // If scope method failed, try click methods
-                    if (!scope) {
-                        console.log(`No working scope found for ${unitName}, trying clicks`);
-
-                        // Try jQuery click with more specific targeting
-                        if (window.jQuery) {
-                            console.log(`Using jQuery click for ${unitName}`);
-                            const $button = window.jQuery(buyMaxButton);
-                            $button.trigger('click');
-
-                            // Also try triggering the mousedown/mouseup events
-                            setTimeout(() => {
-                                $button.trigger('mousedown').trigger('mouseup');
-                            }, 50);
+                    // Use Angular's $compile service to trigger the ng-click
+                    console.log(`Triggering Angular click for ${unitName}`);
+                    
+                    try {
+                        // Get the Angular element and trigger the click through Angular
+                        const $element = angular.element(buyMaxButton);
+                        const scope = $element.scope();
+                        
+                        if (scope) {
+                            // Manually evaluate the ng-click expression
+                            const ngClick = buyMaxButton.getAttribute('ng-click');
+                            console.log(`Evaluating ng-click: ${ngClick} for ${unitName}`);
+                            
+                            // Use Angular's $eval to execute the expression
+                            scope.$eval(ngClick);
+                            scope.$apply(); // Trigger digest cycle
+                            
+                            console.log(`Successfully executed ng-click for ${unitName}`);
                         } else {
-                            // Try multiple click events
-                            console.log(`Using multiple click events for ${unitName}`);
-                            buyMaxButton.click();
-
-                            // Try dispatching different event types
-                            setTimeout(() => {
-                                const events = ['mousedown', 'mouseup', 'click'];
-                                events.forEach(eventType => {
-                                    const event = new MouseEvent(eventType, {
-                                        bubbles: true,
-                                        cancelable: true,
-                                        view: window
-                                    });
-                                    buyMaxButton.dispatchEvent(event);
-                                });
-                            }, 50);
+                            throw new Error('No scope found');
+                        }
+                    } catch (e) {
+                        console.log(`Angular evaluation failed for ${unitName}, trying direct click:`, e.message);
+                        
+                        // Fallback: Try to trigger the click event more aggressively
+                        console.log(`Using aggressive click simulation for ${unitName}`);
+                        
+                        // Focus the element first
+                        buyMaxButton.focus();
+                        
+                        // Create a more complete click event
+                        const clickEvent = new MouseEvent('click', {
+                            view: window,
+                            bubbles: true,
+                            cancelable: true,
+                            clientX: buyMaxButton.getBoundingClientRect().left + 5,
+                            clientY: buyMaxButton.getBoundingClientRect().top + 5
+                        });
+                        
+                        buyMaxButton.dispatchEvent(clickEvent);
+                        
+                        // Also try the href if it exists
+                        const href = buyMaxButton.getAttribute('href');
+                        if (href && href !== 'javascript:') {
+                            console.log(`Following href for ${unitName}: ${href}`);
+                            window.location.href = href;
                         }
                     }
 
