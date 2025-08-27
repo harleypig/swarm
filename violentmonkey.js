@@ -100,6 +100,16 @@
     // Start the auto-buyer interval
     function startAutoBuyer() {
         if (intervalId) clearInterval(intervalId);
+        
+        // Run immediately when enabled
+        isCurrentlyBuying = true;
+        runAutoBuyer();
+        setTimeout(() => {
+            isCurrentlyBuying = false;
+            resetCountdown();
+        }, CONFIG.BETWEEN_TABS_DELAY * 3); // Wait for all buying to complete
+        
+        // Then set up the interval for future runs
         intervalId = setInterval(() => {
             isCurrentlyBuying = true;
             runAutoBuyer();
