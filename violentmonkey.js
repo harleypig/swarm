@@ -22,6 +22,7 @@
         BETWEEN_PURCHASES_DELAY: 500,    // Delay between individual unit purchases (0.5 seconds)
         UPGRADE_DROPDOWN_DELAY: 200,     // Wait time after opening upgrade dropdown (0.2 seconds)
         DROPDOWN_OPEN_DELAY: 100,        // Wait time after opening unit dropdown (0.1 seconds)
+        COUNTDOWN_UPDATE_INTERVAL: 1000, // How often to update countdown display (1 second)
         ANGULAR_CHECK_INTERVAL: 500,     // How often to check if Angular is ready (0.5 seconds)
         GAME_READY_CHECK_INTERVAL: 1000, // How often to check if game is ready (1 second)
         
@@ -38,6 +39,9 @@
     let isEnabled = false;
     let intervalId = null;
     let toggleButton = null;
+    let countdownId = null;          // For countdown timer
+    let nextRunTime = null;          // When next auto-buy will run
+    let isCurrentlyBuying = false;   // Track if auto-buy is running
 
     // Create toggle button
     function createToggleButton() {
@@ -56,6 +60,8 @@
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            min-width: 200px;
+            text-align: center;
         `;
 
         toggleButton.addEventListener('click', toggleAutoBuyer);
@@ -67,20 +73,27 @@
         isEnabled = !isEnabled;
 
         if (isEnabled) {
-            toggleButton.innerHTML = 'Auto-Buyer: ON';
-            toggleButton.style.background = CONFIG.BUTTON_ON_COLOR;
             startAutoBuyer();
+            startCountdown();
         } else {
             toggleButton.innerHTML = 'Auto-Buyer: OFF';
             toggleButton.style.background = CONFIG.BUTTON_OFF_COLOR;
             stopAutoBuyer();
+            stopCountdown();
         }
     }
 
     // Start the auto-buyer interval
     function startAutoBuyer() {
         if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(runAutoBuyer, CONFIG.AUTO_BUY_INTERVAL);
+        intervalId = setInterval(() => {
+            isCurrentlyBuying = true;
+            runAutoBuyer();
+            setTimeout(() => {
+                isCurrentlyBuying = false;
+                resetCountdown();
+            }, CONFIG.BETWEEN_TABS_DELAY * 3); // Wait for all buying to complete
+        }, CONFIG.AUTO_BUY_INTERVAL);
         console.log('Swarm Simulator Auto-Buyer started');
     }
 
@@ -90,7 +103,52 @@
             clearInterval(intervalId);
             intervalId = null;
         }
+        isCurrentlyBuying = false;
+        stopCountdown();
         console.log('Swarm Simulator Auto-Buyer stopped');
+    }
+
+    // Start countdown display
+    function startCountdown() {
+        if (countdownId) clearInterval(countdownId);
+        nextRunTime = Date.now() + CONFIG.AUTO_BUY_INTERVAL;
+        
+        countdownId = setInterval(() => {
+            if (!isEnabled) {
+                stopCountdown();
+                return;
+            }
+            
+            if (isCurrentlyBuying) {
+                toggleButton.innerHTML = 'Auto Buying...';
+                toggleButton.style.background = '#ffaa00'; // Orange while buying
+            } else {
+                const timeLeft = Math.max(0, Math.ceil((nextRunTime - Date.now()) / 1000));
+                if (timeLeft > 0) {
+                    toggleButton.innerHTML = `Next auto buy in ${timeLeft}s`;
+                    toggleButton.style.background = CONFIG.BUTTON_ON_COLOR;
+                } else {
+                    toggleButton.innerHTML = 'Auto Buying...';
+                    toggleButton.style.background = '#ffaa00';
+                }
+            }
+        }, CONFIG.COUNTDOWN_UPDATE_INTERVAL);
+    }
+
+    // Stop countdown display
+    function stopCountdown() {
+        if (countdownId) {
+            clearInterval(countdownId);
+            countdownId = null;
+        }
+        nextRunTime = null;
+    }
+
+    // Reset countdown after auto-buy completes
+    function resetCountdown() {
+        if (isEnabled) {
+            nextRunTime = Date.now() + CONFIG.AUTO_BUY_INTERVAL;
+        }
     }
 
     // Main auto-buyer logic
