@@ -3,10 +3,9 @@
 // @namespace    http://tampermonkey.net/
 // @version      2.0
 // @description  Auto-buy meat, territory, and upgrades in Swarm Simulator
-// @author       You
+// @author       harleypig
 // @match        https://swarmsim.com/*
 // @match        https://www.swarmsim.com/*
-// @match        https://coffee.swarmsim.com/*
 // @grant        none
 // ==/UserScript==
 
@@ -35,7 +34,7 @@
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         `;
-        
+
         toggleButton.addEventListener('click', toggleAutoBuyer);
         document.body.appendChild(toggleButton);
     }
@@ -43,7 +42,7 @@
     // Toggle auto-buyer on/off
     function toggleAutoBuyer() {
         isEnabled = !isEnabled;
-        
+
         if (isEnabled) {
             toggleButton.innerHTML = 'Auto-Buyer: ON';
             toggleButton.style.background = '#44ff44';
@@ -74,17 +73,17 @@
     // Main auto-buyer logic
     function runAutoBuyer() {
         if (!isEnabled) return;
-        
+
         console.log('Running auto-buyer cycle...');
-        
+
         // Buy meat units
         buyUnitsInTab('meat');
-        
+
         // Small delay between tabs
         setTimeout(() => {
             // Buy territory units
             buyUnitsInTab('territory');
-            
+
             // Small delay before upgrades
             setTimeout(() => {
                 // Buy upgrades
@@ -96,27 +95,27 @@
     // Buy units in a specific tab (meat or territory)
     function buyUnitsInTab(tabName) {
         console.log(`Processing ${tabName} tab...`);
-        
+
         // Click the tab - look for tab with specific name
         const tab = findTab(tabName);
         if (!tab) {
             console.log(`${tabName} tab not found`);
             return;
         }
-        
+
         // Click the tab
         tab.click();
-        
+
         // Wait for tab content to load
         setTimeout(() => {
             // Get all unit rows in the current tab
             const unitRows = document.querySelectorAll('tr[ng-repeat*="unit"]');
-            
+
             // Process units from bottom to top (reverse order)
             const unitsArray = Array.from(unitRows);
             for (let i = unitsArray.length - 1; i >= 0; i--) {
                 const unitRow = unitsArray[i];
-                
+
                 // Check if this unit has buy buttons and try to buy max
                 if (tryBuyMaxForUnit(unitRow)) {
                     // Small delay between purchases
@@ -130,19 +129,19 @@
     function findTab(tabName) {
         // Look for tabs in the nav-tabs structure
         const tabLinks = document.querySelectorAll('.nav-tabs a, .tab a');
-        
+
         for (let tab of tabLinks) {
             const tabText = tab.textContent.toLowerCase().trim();
             if (tabText.includes(tabName.toLowerCase())) {
                 return tab;
             }
-            
+
             // Also check for icon classes that might indicate the tab
             if (tab.querySelector(`.icon-${tabName}, .tab-icon-${tabName}`)) {
                 return tab;
             }
         }
-        
+
         return null;
     }
 
@@ -151,7 +150,7 @@
         // Look for buy max button in this unit row
         // Based on buyunit-dropdown.html, look for dropdown with buy max options
         const buyMaxButton = unitRow.querySelector('a[ng-click*="buyMaxUnit"], a[ng-click*="buyMax"]');
-        
+
         if (buyMaxButton) {
             // Check if the button is enabled (not disabled class)
             if (!buyMaxButton.classList.contains('disabled')) {
@@ -161,7 +160,7 @@
                 return true;
             }
         }
-        
+
         // Alternative: look for buy buttons in the advanced unit data area
         const buyButton = unitRow.querySelector('button[ng-click*="buyMaxUnit"]');
         if (buyButton && !buyButton.disabled && !buyButton.classList.contains('disabled')) {
@@ -170,7 +169,7 @@
             buyButton.click();
             return true;
         }
-        
+
         return false;
     }
 
@@ -181,26 +180,26 @@
         if (labelElement) {
             return labelElement.textContent.trim();
         }
-        
+
         // Fallback: look for any text that might be the unit name
         const cells = unitRow.querySelectorAll('td');
         if (cells.length > 1) {
             return cells[1].textContent.trim();
         }
-        
+
         return 'Unknown Unit';
     }
 
     // Buy upgrades using the "Buy all upgrades" button
     function buyUpgrades() {
         console.log('Looking for upgrade buttons...');
-        
+
         // Look for the "More..." dropdown first
         const moreDropdown = document.querySelector('.dropdown-toggle');
         if (moreDropdown && moreDropdown.textContent.includes('More')) {
             // Click to open dropdown
             moreDropdown.click();
-            
+
             setTimeout(() => {
                 // Look for "Buy all X upgrades" in the dropdown menu
                 const buyAllUpgrades = document.querySelector('a[ng-click*="buyAllUpgrades"]');
@@ -208,14 +207,14 @@
                     console.log('Buying all available upgrades');
                     buyAllUpgrades.click();
                 }
-                
+
                 // Also look for "Buy cheapest X upgrades"
                 const buyCheapestUpgrades = document.querySelector('a[ng-click*="buyCheapestUpgrades"]');
                 if (buyCheapestUpgrades && !buyCheapestUpgrades.parentElement.classList.contains('disabled')) {
                     console.log('Buying cheapest upgrades');
                     buyCheapestUpgrades.click();
                 }
-                
+
                 // Close dropdown by clicking elsewhere
                 document.body.click();
             }, 200);
@@ -238,7 +237,7 @@
             document.addEventListener('DOMContentLoaded', initialize);
             return;
         }
-        
+
         // Wait for Angular to initialize
         waitForAngular(() => {
             setTimeout(() => {
