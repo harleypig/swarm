@@ -312,7 +312,7 @@
                     // Try to get scope from various elements
                     let scope = null;
                     const elementsToTry = [dropdown, unitRow, dropdown.parentElement];
-                    
+
                     for (let element of elementsToTry) {
                         if (element) {
                             const testScope = angular.element(element).scope();
@@ -344,13 +344,13 @@
                     // If scope method failed, try click methods
                     if (!scope) {
                         console.log(`No working scope found for ${unitName}, trying clicks`);
-                        
+
                         // Try jQuery click with more specific targeting
                         if (window.jQuery) {
                             console.log(`Using jQuery click for ${unitName}`);
                             const $button = window.jQuery(buyMaxButton);
                             $button.trigger('click');
-                            
+
                             // Also try triggering the mousedown/mouseup events
                             setTimeout(() => {
                                 $button.trigger('mousedown').trigger('mouseup');
@@ -359,7 +359,7 @@
                             // Try multiple click events
                             console.log(`Using multiple click events for ${unitName}`);
                             buyMaxButton.click();
-                            
+
                             // Try dispatching different event types
                             setTimeout(() => {
                                 const events = ['mousedown', 'mouseup', 'click'];
