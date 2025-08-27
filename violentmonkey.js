@@ -33,7 +33,7 @@
         
         // Colors
         BUTTON_OFF_COLOR: '#ff4444',     // Button color when disabled (red)
-        BUTTON_ON_COLOR: '#44ff44',      // Button color when enabled (green)
+        BUTTON_ON_COLOR: '#33cc33',      // Button color when enabled (darker green)
     };
 
     let isEnabled = false;
