@@ -21,6 +21,7 @@
         BETWEEN_TABS_DELAY: 1000,        // Delay between processing different tabs (1 second)
         BETWEEN_PURCHASES_DELAY: 500,    // Delay between individual unit purchases (0.5 seconds)
         UPGRADE_DROPDOWN_DELAY: 200,     // Wait time after opening upgrade dropdown (0.2 seconds)
+        DROPDOWN_OPEN_DELAY: 100,        // Wait time after opening unit dropdown (0.1 seconds)
         ANGULAR_CHECK_INTERVAL: 500,     // How often to check if Angular is ready (0.5 seconds)
         GAME_READY_CHECK_INTERVAL: 1000, // How often to check if game is ready (1 second)
         
@@ -130,8 +131,8 @@
 
         // Wait for tab content to load
         setTimeout(() => {
-            // Get all unit rows in the current tab
-            const unitRows = document.querySelectorAll('tr[ng-repeat*="unit"]');
+            // Get all unit rows in the current tab - use specific selector from main.html
+            const unitRows = document.querySelectorAll('tr[ng-repeat="unit in cur.tab.sortUnits() | filter:filterVisible track by unit.name"]');
 
             // Process units from bottom to top (reverse order)
             const unitsArray = Array.from(unitRows);
@@ -149,50 +150,40 @@
 
     // Find tab by name
     function findTab(tabName) {
-        // Look for tabs in the nav-tabs structure
-        const tabLinks = document.querySelectorAll('.nav-tabs a, .tab a');
-
-        for (let tab of tabLinks) {
-            const tabText = tab.textContent.toLowerCase().trim();
-            if (tabText.includes(tabName.toLowerCase())) {
-                return tab;
-            }
-
-            // Also check for icon classes that might indicate the tab
-            if (tab.querySelector(`.icon-${tabName}, .tab-icon-${tabName}`)) {
-                return tab;
-            }
+        // Look for specific tab classes from tabs.html
+        const tab = document.querySelector(`.tab-resource.tab-${tabName}`);
+        if (tab) {
+            return tab.querySelector('a'); // Get the actual link inside the tab
         }
-
         return null;
     }
 
     // Try to buy max for a specific unit
     function tryBuyMaxForUnit(unitRow) {
-        // Look for buy max button in this unit row
-        // Based on buyunit-dropdown.html, look for dropdown with buy max options
-        const buyMaxButton = unitRow.querySelector('a[ng-click*="buyMaxUnit"], a[ng-click*="buyMax"]');
-
-        if (buyMaxButton) {
-            // Check if the button is enabled (not disabled class)
-            if (!buyMaxButton.classList.contains('disabled')) {
+        // First, find the buyunitdropdown component
+        const dropdown = unitRow.querySelector('buyunitdropdown');
+        if (!dropdown) return false;
+        
+        // Open the dropdown by clicking the button
+        const dropdownButton = dropdown.querySelector('.dropdown-toggle');
+        if (!dropdownButton || dropdownButton.textContent.includes("Can't buy")) {
+            return false;
+        }
+        
+        // Click to open dropdown
+        dropdownButton.click();
+        
+        // Wait a moment, then find the buy max button
+        setTimeout(() => {
+            const buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:1})"]');
+            if (buyMaxButton && !buyMaxButton.parentElement.classList.contains('disabled')) {
                 const unitName = getUnitNameFromRow(unitRow);
                 console.log(`Buying max ${unitName}`);
                 buyMaxButton.click();
-                return true;
             }
-        }
-
-        // Alternative: look for buy buttons in the advanced unit data area
-        const buyButton = unitRow.querySelector('button[ng-click*="buyMaxUnit"]');
-        if (buyButton && !buyButton.disabled && !buyButton.classList.contains('disabled')) {
-            const unitName = getUnitNameFromRow(unitRow);
-            console.log(`Buying max ${unitName}`);
-            buyButton.click();
-            return true;
-        }
-
-        return false;
+        }, CONFIG.DROPDOWN_OPEN_DELAY);
+        
+        return true;
     }
 
     // Get unit name from a table row
@@ -216,31 +207,31 @@
     function buyUpgrades() {
         console.log('Looking for upgrade buttons...');
 
-        // Look for the "More..." dropdown first
-        const moreDropdown = document.querySelector('.dropdown-toggle');
-        if (moreDropdown && moreDropdown.textContent.includes('More')) {
-            // Click to open dropdown
-            moreDropdown.click();
-
-            setTimeout(() => {
-                // Look for "Buy all X upgrades" in the dropdown menu
-                const buyAllUpgrades = document.querySelector('a[ng-click*="buyAllUpgrades"]');
-                if (buyAllUpgrades && !buyAllUpgrades.parentElement.classList.contains('disabled')) {
-                    console.log('Buying all available upgrades');
-                    buyAllUpgrades.click();
-                }
-
-                // Also look for "Buy cheapest X upgrades"
-                const buyCheapestUpgrades = document.querySelector('a[ng-click*="buyCheapestUpgrades"]');
-                if (buyCheapestUpgrades && !buyCheapestUpgrades.parentElement.classList.contains('disabled')) {
-                    console.log('Buying cheapest upgrades');
-                    buyCheapestUpgrades.click();
-                }
-
-                // Close dropdown by clicking elsewhere
-                document.body.click();
-            }, CONFIG.UPGRADE_DROPDOWN_DELAY);
+        // Find the More... dropdown specifically
+        const moreDropdown = document.querySelector('.dropdown a.dropdown-toggle');
+        if (!moreDropdown || !moreDropdown.textContent.includes('More')) {
+            return;
         }
+        
+        moreDropdown.click();
+        
+        setTimeout(() => {
+            // Use exact selectors from tabs.html
+            const buyAllUpgrades = document.querySelector('a[ng-click="buyAllUpgrades()"]');
+            if (buyAllUpgrades && !buyAllUpgrades.parentElement.classList.contains('disabled')) {
+                console.log('Buying all available upgrades');
+                buyAllUpgrades.click();
+            }
+            
+            const buyCheapestUpgrades = document.querySelector('a[ng-click="buyCheapestUpgrades()"]');
+            if (buyCheapestUpgrades && !buyCheapestUpgrades.parentElement.classList.contains('disabled')) {
+                console.log('Buying cheapest upgrades');
+                buyCheapestUpgrades.click();
+            }
+            
+            // Close dropdown
+            document.body.click();
+        }, CONFIG.UPGRADE_DROPDOWN_DELAY);
     }
 
     // Wait for Angular to be ready
