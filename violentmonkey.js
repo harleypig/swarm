@@ -231,235 +231,98 @@
         return null;
     }
 
-    // Try to buy max for a specific unit
-    function tryBuyMaxForUnit(unitRow) {
-        // First, find the buyunitdropdown component
-        const dropdown = unitRow.querySelector('buyunitdropdown');
-        if (!dropdown) return false;
-
-        // Check if the dropdown button shows "Can't buy"
-        const dropdownButton = dropdown.querySelector('.dropdown-toggle');
-        if (!dropdownButton) return false;
-
-        // Check if it says "Can't buy" - if so, skip this unit
-        const buttonText = dropdownButton.textContent.trim();
-        if (buttonText.includes("Can't buy")) {
-            return false;
+    // Get unit name from a table row
+    function getUnitNameFromRow(unitRow) {
+        // Look for the unit label
+        const labelElement = unitRow.querySelector('.label-label, .titlecase, .unselectedlist-label');
+        if (labelElement) {
+            return labelElement.textContent.trim();
         }
 
-        // Click to open dropdown
-        dropdownButton.click();
+        // Fallback: look for any text that might be the unit name
+        const cells = unitRow.querySelectorAll('td');
+        if (cells.length > 1) {
+            return cells[1].textContent.trim();
+        }
 
-        // Wait a moment, then find and click the buy max button
-        setTimeout(() => {
-            // Look for all available buy buttons in the dropdown
-            const allBuyButtons = dropdown.querySelectorAll('a[ng-click*="buyMaxUnit"], a[ng-click*="buyUnit"]');
-            console.log(`Found ${allBuyButtons.length} buy buttons for ${getUnitNameFromRow(unitRow)}`);
-
-            // Try to find the max buy button (percent:1) first
-            let buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:1})"]');
-
-            // If no max button, try the 25% max button
-            if (!buyMaxButton) {
-                buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:0.25})"]');
-            }
-
-            // If no max buttons, try the regular buy button
-            if (!buyMaxButton) {
-                buyMaxButton = dropdown.querySelector('a[ng-click="buyUnit({unit:unit, num:fullnum()})"]');
-            }
-
-            // Check if the purchase amount is greater than current unit count
-            if (buyMaxButton) {
-                const unitName = getUnitNameFromRow(unitRow);
-
-                // Get the current unit count from the table
-                const currentCountCell = unitRow.querySelector('td:nth-child(3)');
-                const currentCountText = currentCountCell ? currentCountCell.textContent.trim() : '0';
-
-                // Get the buy amount from the button text
-                const buyText = buyMaxButton.textContent.trim();
-                const buyMatch = buyText.match(/Buy\s+([\d.e+]+)/i);
-
-                if (buyMatch) {
-                    const buyAmount = parseFloat(buyMatch[1]);
-                    const currentCount = parseFloat(currentCountText.replace(/[,]/g, ''));
-
-                    console.log(`${unitName}: Current=${currentCountText}, Buy=${buyMatch[1]}`);
-
-                    if (buyAmount <= currentCount) {
-                        console.log(`Skipping ${unitName}: buy amount (${buyAmount}) <= current count (${currentCount})`);
-                        buyMaxButton = null; // Don't buy
-                    } else {
-                        console.log(`Will buy ${unitName}: buy amount (${buyAmount}) > current count (${currentCount})`);
-                    }
-                } else {
-                    console.log(`Could not parse buy amount for ${unitName}: "${buyText}"`);
-                    buyMaxButton = null; // Don't buy if we can't determine the amount
-                }
-            }
-
-            if (buyMaxButton) {
-                // Check if the parent li is disabled
-                const parentLi = buyMaxButton.closest('li');
-                if (parentLi && !parentLi.classList.contains('disabled')) {
-                    const unitName = getUnitNameFromRow(unitRow);
-                    console.log(`Clicking buy button for ${unitName}: ${buyMaxButton.getAttribute('ng-click')}`);
-
-                    // Try multiple approaches to trigger the purchase
-                    console.log(`Attempting purchase for ${unitName}`);
-
-                    // Method 1: Try different event types and timing
-                    function tryEventSequence() {
-                        console.log(`Trying event sequence for ${unitName}`);
-                        const events = [
-                            { type: 'mouseenter', bubbles: true },
-                            { type: 'mouseover', bubbles: true },
-                            { type: 'mousedown', bubbles: true, button: 0 },
-                            { type: 'focus', bubbles: false },
-                            { type: 'mouseup', bubbles: true, button: 0 },
-                            { type: 'click', bubbles: true, button: 0 }
-                        ];
-
-                        events.forEach((eventConfig, index) => {
-                            setTimeout(() => {
-                                const event = new MouseEvent(eventConfig.type, {
-                                    view: window,
-                                    bubbles: eventConfig.bubbles,
-                                    cancelable: true,
-                                    button: eventConfig.button || 0
-                                });
-                                buyMaxButton.dispatchEvent(event);
-                            }, index * 10);
-                        });
-                    }
-
-                    // Method 2: Use jQuery's more powerful event system
-                    function tryJQueryEvents() {
-                        console.log(`Trying jQuery events for ${unitName}`);
-                        if (window.jQuery) {
-                            const $button = window.jQuery(buyMaxButton);
-
-                            $button.focus()
-                                   .trigger('mouseenter')
-                                   .trigger('mouseover')
-                                   .trigger('mousedown')
-                                   .trigger('mouseup')
-                                   .trigger('click')
-                                   .trigger('change');
-
-                            // Also try triggering with event data
-                            $button.trigger('click', [{ synthetic: true }]);
-                        }
-                    }
-
-                    // Method 3: Try to access Angular scope from parent elements
-                    function tryParentScope() {
-                        console.log(`Trying parent scope for ${unitName}`);
-                        let workingScope = null;
-                        let currentElement = buyMaxButton;
-
-                        while (currentElement && !workingScope) {
-                            try {
-                                const scope = angular.element(currentElement).scope();
-                                if (scope && (scope.buyMaxUnit || scope.buyUnit)) {
-                                    workingScope = scope;
-                                    console.log(`Found working scope on ${currentElement.tagName} for ${unitName}`);
-                                    break;
-                                }
-                            } catch (e) {}
-                            currentElement = currentElement.parentElement;
-                        }
-
-                        if (workingScope) {
-                            try {
-                                const ngClick = buyMaxButton.getAttribute('ng-click');
-                                console.log(`Evaluating ng-click via parent scope: ${ngClick} for ${unitName}`);
-                                workingScope.$eval(ngClick);
-                                workingScope.$apply();
-                                console.log(`Successfully executed ng-click via parent scope for ${unitName}`);
-                                return true;
-                            } catch (e) {
-                                console.log(`Parent scope evaluation failed for ${unitName}:`, e.message);
-                            }
-                        } else {
-                            console.log(`No working parent scope found for ${unitName}`);
-                        }
-                        return false;
-                    }
-
-                    // Method 4: Simulate exact Bootstrap dropdown behavior
-                    function tryBootstrapDropdown() {
-                        console.log(`Trying Bootstrap dropdown simulation for ${unitName}`);
-
-                        setTimeout(() => {
-                            if (dropdown.classList.contains('open')) {
-                                const dropdownScope = angular.element(dropdown).scope();
-                                if (dropdownScope) {
-                                    try {
-                                        if (buyMaxButton.getAttribute('ng-click').includes('buyMaxUnit')) {
-                                            dropdownScope.buyMaxUnit({unit: dropdownScope.unit, percent: 1});
-                                        } else {
-                                            dropdownScope.buyUnit({unit: dropdownScope.unit, num: dropdownScope.fullnum()});
-                                        }
-                                        dropdownScope.$apply();
-                                        console.log(`Bootstrap dropdown method succeeded for ${unitName}`);
-                                        return true;
-                                    } catch (e) {
-                                        console.log(`Bootstrap dropdown method failed for ${unitName}:`, e.message);
-                                    }
-                                }
-                            }
-                            return false;
-                        }, 100);
-                    }
-
-                    // Method 5: Use browser's native form submission
-                    function tryFormSubmission() {
-                        console.log(`Trying form submission for ${unitName}`);
-
-                        const form = buyMaxButton.closest('form');
-                        if (form) {
-                            form.submit();
-                        } else {
-                            const href = buyMaxButton.getAttribute('href');
-                            if (href && href !== 'javascript:' && href !== 'javascript:void(0)') {
-                                console.log(`Following href for ${unitName}: ${href}`);
-                                window.location.href = href;
-                            } else {
-                                // Create a temporary form and submit
-                                const tempForm = document.createElement('form');
-                                tempForm.style.display = 'none';
-                                tempForm.action = 'javascript:void(0)';
-                                document.body.appendChild(tempForm);
-                                tempForm.submit();
-                                document.body.removeChild(tempForm);
-                            }
-                        }
-                    }
-
-                    // Try methods in sequence (comment/uncomment as needed)
-                    tryEventSequence();
-                    tryJQueryEvents();
-                    if (!tryParentScope()) {
-                        tryBootstrapDropdown();
-                        tryFormSubmission();
-                    }
-
-                    // Close the dropdown after clicking
-                    setTimeout(() => {
-                        document.body.click();
-                    }, 100);
-                } else {
-                    console.log(`Buy button disabled for ${getUnitNameFromRow(unitRow)}`);
-                }
-            } else {
-                console.log(`No buy buttons found for ${getUnitNameFromRow(unitRow)}`);
-                // Close dropdown if button not found
-                document.body.click();
-            }
-        }, CONFIG.DROPDOWN_OPEN_DELAY * 3); // Increase delay even more
-
-        return true;
+        return 'Unknown Unit';
     }
-})
+
+    // Buy upgrades using the "Buy all upgrades" button
+    function buyUpgrades() {
+        console.log('Looking for upgrade buttons...');
+
+        // Find the More... dropdown specifically
+        const moreDropdown = document.querySelector('.dropdown a.dropdown-toggle');
+        if (!moreDropdown || !moreDropdown.textContent.includes('More')) {
+            return;
+        }
+
+        moreDropdown.click();
+
+        setTimeout(() => {
+            // Use exact selectors from tabs.html
+            const buyAllUpgrades = document.querySelector('a[ng-click="buyAllUpgrades()"]');
+            if (buyAllUpgrades && !buyAllUpgrades.parentElement.classList.contains('disabled')) {
+                console.log('Buying all available upgrades');
+                buyAllUpgrades.click();
+            }
+
+            const buyCheapestUpgrades = document.querySelector('a[ng-click="buyCheapestUpgrades()"]');
+            if (buyCheapestUpgrades && !buyCheapestUpgrades.parentElement.classList.contains('disabled')) {
+                console.log('Buying cheapest upgrades');
+                buyCheapestUpgrades.click();
+            }
+
+            // Close dropdown
+            document.body.click();
+        }, CONFIG.UPGRADE_DROPDOWN_DELAY);
+    }
+
+    // Wait for Angular to be ready
+    function waitForAngular(callback) {
+        if (window.angular && document.querySelector('[ng-app]')) {
+            callback();
+        } else {
+            setTimeout(() => waitForAngular(callback), CONFIG.ANGULAR_CHECK_INTERVAL);
+        }
+    }
+
+    // Check if game is fully ready (including storage system)
+    function waitForGameReady(callback) {
+        // Check if the game's storage system is ready
+        const storageReady = !document.querySelector('.loading') && 
+                            document.querySelector('.nav-tabs') &&
+                            // Add checks for game state being loaded
+                            document.querySelector('tr[ng-repeat*="unit"]') &&
+                            // Check if any units are visible (indicates data is loaded)
+                            document.querySelectorAll('tr[ng-repeat*="unit"]').length > 0;
+
+        if (window.angular && document.querySelector('[ng-app]') && storageReady) {
+            callback();
+        } else {
+            setTimeout(() => waitForGameReady(callback), CONFIG.GAME_READY_CHECK_INTERVAL);
+        }
+    }
+
+    // Initialize when page loads
+    function initialize() {
+        // Wait for page to be ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initialize);
+            return;
+        }
+
+        // Wait for Angular and game to be ready
+        waitForAngular(() => {
+            waitForGameReady(() => {
+                setTimeout(() => {
+                    createToggleButton();
+                    console.log('Swarm Simulator Auto-Buyer initialized');
+                }, CONFIG.INITIAL_DELAY);
+            });
+        });
+    }
+
+    initialize();
+})();
