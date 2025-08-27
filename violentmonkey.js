@@ -272,21 +272,21 @@
             // Check if the purchase amount is greater than current unit count
             if (buyMaxButton) {
                 const unitName = getUnitNameFromRow(unitRow);
-                
+
                 // Get the current unit count from the table
                 const currentCountCell = unitRow.querySelector('td:nth-child(3)');
                 const currentCountText = currentCountCell ? currentCountCell.textContent.trim() : '0';
-                
+
                 // Get the buy amount from the button text
                 const buyText = buyMaxButton.textContent.trim();
                 const buyMatch = buyText.match(/Buy\s+([\d.e+]+)/i);
-                
+
                 if (buyMatch) {
                     const buyAmount = parseFloat(buyMatch[1]);
                     const currentCount = parseFloat(currentCountText.replace(/[,]/g, ''));
-                    
+
                     console.log(`${unitName}: Current=${currentCountText}, Buy=${buyMatch[1]}`);
-                    
+
                     if (buyAmount <= currentCount) {
                         console.log(`Skipping ${unitName}: buy amount (${buyAmount}) <= current count (${currentCount})`);
                         buyMaxButton = null; // Don't buy
