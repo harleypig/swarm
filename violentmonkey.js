@@ -29,7 +29,7 @@
     // Configuration variables - adjust these to tune the script behavior
     const CONFIG = {
         // Timing settings (in milliseconds)
-        AUTO_BUY_INTERVAL: 60000,        // How often to run auto-buyer (1 minute)
+        AUTO_BUY_INTERVAL: 30000,        // How often to run auto-buyer (30 seconds)
         INITIAL_DELAY: 15000,            // Wait time before initializing script (15 seconds)
         TAB_LOAD_DELAY: 1000,            // Wait time after clicking a tab (1 second)
         BETWEEN_TABS_DELAY: 1000,        // Delay between processing different tabs (1 second)
