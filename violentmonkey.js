@@ -14,24 +14,26 @@
 
     // Configuration variables - adjust these to tune the script behavior
     const CONFIG = {
-        // Timing settings (in milliseconds)
+        // General timing settings (in milliseconds)
         AUTO_BUY_INTERVAL: 30000,        // How often to run auto-buyer (30 seconds)
         INITIAL_DELAY: 15000,            // Wait time before initializing script (15 seconds)
-        TAB_LOAD_DELAY: 1000,            // Wait time after clicking a tab (1 second)
-        BETWEEN_TABS_DELAY: 1000,        // Delay between processing different tabs (1 second)
-        BETWEEN_PURCHASES_DELAY: 1000,   // Delay between individual unit purchases (1 second)
-        UPGRADE_DROPDOWN_DELAY: 200,     // Wait time after opening upgrade dropdown (0.2 seconds)
-        DROPDOWN_OPEN_DELAY: 200,        // Wait time after opening unit dropdown (0.2 seconds)
         COUNTDOWN_UPDATE_INTERVAL: 1000, // How often to update countdown display (1 second)
         ANGULAR_CHECK_INTERVAL: 500,     // How often to check if Angular is ready (0.5 seconds)
         GAME_READY_CHECK_INTERVAL: 1000, // How often to check if game is ready (1 second)
 
-        // UI settings
+        // Meat/Territory unit buying settings (in milliseconds)
+        TAB_LOAD_DELAY: 1000,            // Wait time after clicking a tab (1 second)
+        BETWEEN_TABS_DELAY: 1000,        // Delay between processing different tabs (1 second)
+        BETWEEN_PURCHASES_DELAY: 1000,   // Delay between individual unit purchases (1 second)
+        DROPDOWN_OPEN_DELAY: 200,        // Wait time after opening unit dropdown (0.2 seconds)
+
+        // Upgrade buying settings (in milliseconds)
+        UPGRADE_DROPDOWN_DELAY: 200,     // Wait time after opening upgrade dropdown (0.2 seconds)
+
+        // Button appearance and positioning
         BUTTON_TOP_POSITION: 10,         // Toggle button distance from top (pixels)
         BUTTON_RIGHT_POSITION: 10,       // Toggle button distance from right (pixels)
         BUTTON_Z_INDEX: 9999,            // Toggle button z-index
-
-        // Colors
         BUTTON_OFF_COLOR: '#ff4444',     // Button color when disabled (red)
         BUTTON_ON_COLOR: '#33cc33',      // Button color when enabled (darker green)
     };
