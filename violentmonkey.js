@@ -291,7 +291,7 @@
                         }
                     } catch (e) {
                         console.log(`Scope call failed for ${unitName}, trying click:`, e.message);
-                        
+
                         // Second try: Simulate click with jQuery if available
                         if (window.jQuery) {
                             console.log(`Using jQuery click for ${unitName}`);
