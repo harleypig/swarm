@@ -274,14 +274,14 @@
 
                     // Trigger the click event that Angular will handle
                     console.log(`Triggering click event for ${unitName}`);
-                    
+
                     // Create and dispatch a proper click event
                     const clickEvent = new MouseEvent('click', {
                         bubbles: true,
                         cancelable: true,
                         view: window
                     });
-                    
+
                     buyMaxButton.dispatchEvent(clickEvent);
                     console.log(`Click event dispatched for ${unitName}`);
 
