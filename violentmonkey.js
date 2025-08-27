@@ -137,10 +137,10 @@
             } else {
                 const timeLeft = Math.max(0, Math.ceil((nextRunTime - Date.now()) / 1000));
                 if (timeLeft > 0) {
-                    toggleButton.innerHTML = `Next auto buy in ${timeLeft}s`;
+                    toggleButton.innerHTML = `auto buy in ${timeLeft}s`;
                     toggleButton.style.background = CONFIG.BUTTON_ON_COLOR;
                 } else {
-                    toggleButton.innerHTML = 'Auto Buying...';
+                    toggleButton.innerHTML = 'Auto buying...';
                     toggleButton.style.background = '#ffaa00';
                 }
             }
