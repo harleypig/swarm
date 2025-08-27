@@ -16,7 +16,7 @@
     const CONFIG = {
         // Timing settings (in milliseconds)
         AUTO_BUY_INTERVAL: 60000,        // How often to run auto-buyer (1 minute)
-        INITIAL_DELAY: 5000,             // Wait time before initializing script (5 seconds)
+        INITIAL_DELAY: 15000,            // Wait time before initializing script (15 seconds)
         TAB_LOAD_DELAY: 1000,            // Wait time after clicking a tab (1 second)
         BETWEEN_TABS_DELAY: 1000,        // Delay between processing different tabs (1 second)
         BETWEEN_PURCHASES_DELAY: 500,    // Delay between individual unit purchases (0.5 seconds)
@@ -254,11 +254,15 @@
 
     // Check if game is fully ready (including storage system)
     function waitForGameReady(callback) {
-        // Check if the game's storage system is ready
-        if (window.angular && 
-            document.querySelector('[ng-app]') && 
-            !document.querySelector('.loading') && // No loading indicators
-            document.querySelector('.nav-tabs')) { // Main UI is loaded
+        // Check if storage system is ready
+        const storageReady = !document.querySelector('.loading') && 
+                            document.querySelector('.nav-tabs') &&
+                            // Add checks for game state being loaded
+                            document.querySelector('tr[ng-repeat*="unit"]') &&
+                            // Check if any units are visible (indicates data is loaded)
+                            document.querySelectorAll('tr[ng-repeat*="unit"]').length > 0;
+        
+        if (window.angular && document.querySelector('[ng-app]') && storageReady) {
             callback();
         } else {
             setTimeout(() => waitForGameReady(callback), CONFIG.GAME_READY_CHECK_INTERVAL);
