@@ -259,10 +259,44 @@
             // Try to find the max buy button (percent:1) first
             let buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:1})"]');
 
-            // If no max button, try the regular buy button
+            // If no max button, try the 25% max button
+            if (!buyMaxButton) {
+                buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:0.25})"]');
+            }
+
+            // If no max buttons, try the regular buy button
             if (!buyMaxButton) {
                 buyMaxButton = dropdown.querySelector('a[ng-click="buyUnit({unit:unit, num:fullnum()})"]');
-                console.log(`Using regular buy button instead of max for ${getUnitNameFromRow(unitRow)}`);
+            }
+
+            // Check if the purchase amount is greater than current unit count
+            if (buyMaxButton) {
+                const unitName = getUnitNameFromRow(unitRow);
+                
+                // Get the current unit count from the table
+                const currentCountCell = unitRow.querySelector('td:nth-child(3)');
+                const currentCountText = currentCountCell ? currentCountCell.textContent.trim() : '0';
+                
+                // Get the buy amount from the button text
+                const buyText = buyMaxButton.textContent.trim();
+                const buyMatch = buyText.match(/Buy\s+([\d.e+]+)/i);
+                
+                if (buyMatch) {
+                    const buyAmount = parseFloat(buyMatch[1]);
+                    const currentCount = parseFloat(currentCountText.replace(/[,]/g, ''));
+                    
+                    console.log(`${unitName}: Current=${currentCountText}, Buy=${buyMatch[1]}`);
+                    
+                    if (buyAmount <= currentCount) {
+                        console.log(`Skipping ${unitName}: buy amount (${buyAmount}) <= current count (${currentCount})`);
+                        buyMaxButton = null; // Don't buy
+                    } else {
+                        console.log(`Will buy ${unitName}: buy amount (${buyAmount}) > current count (${currentCount})`);
+                    }
+                } else {
+                    console.log(`Could not parse buy amount for ${unitName}: "${buyText}"`);
+                    buyMaxButton = null; // Don't buy if we can't determine the amount
+                }
             }
 
             if (buyMaxButton) {
