@@ -311,34 +311,34 @@
 
                     // Use Angular's $compile service to trigger the ng-click
                     console.log(`Triggering Angular click for ${unitName}`);
-                    
+
                     try {
                         // Get the Angular element and trigger the click through Angular
                         const $element = angular.element(buyMaxButton);
                         const scope = $element.scope();
-                        
+
                         if (scope) {
                             // Manually evaluate the ng-click expression
                             const ngClick = buyMaxButton.getAttribute('ng-click');
                             console.log(`Evaluating ng-click: ${ngClick} for ${unitName}`);
-                            
+
                             // Use Angular's $eval to execute the expression
                             scope.$eval(ngClick);
                             scope.$apply(); // Trigger digest cycle
-                            
+
                             console.log(`Successfully executed ng-click for ${unitName}`);
                         } else {
                             throw new Error('No scope found');
                         }
                     } catch (e) {
                         console.log(`Angular evaluation failed for ${unitName}, trying direct click:`, e.message);
-                        
+
                         // Fallback: Try to trigger the click event more aggressively
                         console.log(`Using aggressive click simulation for ${unitName}`);
-                        
+
                         // Focus the element first
                         buyMaxButton.focus();
-                        
+
                         // Create a more complete click event
                         const clickEvent = new MouseEvent('click', {
                             view: window,
@@ -347,9 +347,9 @@
                             clientX: buyMaxButton.getBoundingClientRect().left + 5,
                             clientY: buyMaxButton.getBoundingClientRect().top + 5
                         });
-                        
+
                         buyMaxButton.dispatchEvent(clickEvent);
-                        
+
                         // Also try the href if it exists
                         const href = buyMaxButton.getAttribute('href');
                         if (href && href !== 'javascript:') {
