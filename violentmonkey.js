@@ -442,11 +442,11 @@
                     }
 
                     // Try methods in sequence (comment/uncomment as needed)
-                    // tryEventSequence();
-                    // tryJQueryEvents();
+                    tryEventSequence();
+                    tryJQueryEvents();
                     if (!tryParentScope()) {
-                        // tryBootstrapDropdown();
-                        // tryFormSubmission();
+                        tryBootstrapDropdown();
+                        tryFormSubmission();
                     }
 
                     // Close the dropdown after clicking
