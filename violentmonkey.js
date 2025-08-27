@@ -12,20 +12,6 @@
 (function() {
     'use strict';
 
-    // Suppress multistore warnings by intercepting console messages
-    const originalConsoleWarn = console.warn;
-    console.warn = function(...args) {
-        const message = args.join(' ');
-        // Filter out multistore/SwfStore warnings
-        if (message.includes('multistore.setItem error') || 
-            message.includes('SwfStore is not yet finished initializing') ||
-            message.includes('flash SwfStore')) {
-            return; // Suppress these warnings
-        }
-        // Allow other warnings through
-        originalConsoleWarn.apply(console, args);
-    };
-
     // Configuration variables - adjust these to tune the script behavior
     const CONFIG = {
         // Timing settings (in milliseconds)
@@ -249,24 +235,44 @@
         const dropdown = unitRow.querySelector('buyunitdropdown');
         if (!dropdown) return false;
         
-        // Open the dropdown by clicking the button
+        // Check if the dropdown button shows "Can't buy"
         const dropdownButton = dropdown.querySelector('.dropdown-toggle');
-        if (!dropdownButton || dropdownButton.textContent.includes("Can't buy")) {
+        if (!dropdownButton) return false;
+        
+        // Check if it says "Can't buy" - if so, skip this unit
+        const buttonText = dropdownButton.textContent.trim();
+        if (buttonText.includes("Can't buy")) {
             return false;
         }
         
         // Click to open dropdown
         dropdownButton.click();
         
-        // Wait a moment, then find the buy max button
+        // Wait a moment, then find and click the buy max button
         setTimeout(() => {
+            // Look for the buy max button with the exact ng-click from the HTML
             const buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:1})"]');
-            if (buyMaxButton && !buyMaxButton.parentElement.classList.contains('disabled')) {
-                const unitName = getUnitNameFromRow(unitRow);
-                console.log(`Buying max ${unitName}`);
-                buyMaxButton.click();
+            if (buyMaxButton) {
+                // Check if the parent li is disabled
+                const parentLi = buyMaxButton.closest('li');
+                if (parentLi && !parentLi.classList.contains('disabled')) {
+                    const unitName = getUnitNameFromRow(unitRow);
+                    console.log(`Clicking buy max button for ${unitName}`);
+                    buyMaxButton.click();
+                    
+                    // Close the dropdown after clicking
+                    setTimeout(() => {
+                        document.body.click();
+                    }, 50);
+                } else {
+                    console.log(`Buy max button disabled for ${getUnitNameFromRow(unitRow)}`);
+                }
+            } else {
+                console.log(`Buy max button not found for ${getUnitNameFromRow(unitRow)}`);
+                // Close dropdown if button not found
+                document.body.click();
             }
-        }, CONFIG.DROPDOWN_OPEN_DELAY);
+        }, CONFIG.DROPDOWN_OPEN_DELAY * 2); // Increase delay to ensure dropdown is fully open
         
         return true;
     }
