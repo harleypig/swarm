@@ -222,11 +222,14 @@
 
     // Find tab by name
     function findTab(tabName) {
-        // Look for specific tab classes from tabs.html
-        const tab = document.querySelector(`.tab-resource.tab-${tabName}`);
-        if (tab) {
-            return tab.querySelector('a'); // Get the actual link inside the tab
+        // Look for tabs by their href attribute
+        const tabLink = document.querySelector(`a[href="#/tab/${tabName}"]`);
+        if (tabLink) {
+            return tabLink;
         }
+        
+        // If not found, the tab might not be available yet (like territory)
+        console.log(`${tabName} tab not available yet`);
         return null;
     }
 
