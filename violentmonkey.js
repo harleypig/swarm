@@ -339,15 +339,15 @@
                         console.log(`Trying jQuery events for ${unitName}`);
                         if (window.jQuery) {
                             const $button = window.jQuery(buyMaxButton);
-                            
+
                             $button.focus()
                                    .trigger('mouseenter')
-                                   .trigger('mouseover') 
+                                   .trigger('mouseover')
                                    .trigger('mousedown')
                                    .trigger('mouseup')
                                    .trigger('click')
                                    .trigger('change');
-                                   
+
                             // Also try triggering with event data
                             $button.trigger('click', [{ synthetic: true }]);
                         }
@@ -391,7 +391,7 @@
                     // Method 4: Simulate exact Bootstrap dropdown behavior
                     function tryBootstrapDropdown() {
                         console.log(`Trying Bootstrap dropdown simulation for ${unitName}`);
-                        
+
                         setTimeout(() => {
                             if (dropdown.classList.contains('open')) {
                                 const dropdownScope = angular.element(dropdown).scope();
@@ -417,7 +417,7 @@
                     // Method 5: Use browser's native form submission
                     function tryFormSubmission() {
                         console.log(`Trying form submission for ${unitName}`);
-                        
+
                         const form = buyMaxButton.closest('form');
                         if (form) {
                             form.submit();
