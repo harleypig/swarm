@@ -272,18 +272,36 @@
                     const unitName = getUnitNameFromRow(unitRow);
                     console.log(`Clicking buy button for ${unitName}: ${buyMaxButton.getAttribute('ng-click')}`);
 
-                    // Trigger the click event that Angular will handle
-                    console.log(`Triggering click event for ${unitName}`);
+                    // Try multiple approaches to trigger the purchase
+                    console.log(`Attempting purchase for ${unitName}`);
 
-                    // Create and dispatch a proper click event
-                    const clickEvent = new MouseEvent('click', {
-                        bubbles: true,
-                        cancelable: true,
-                        view: window
-                    });
-
-                    buyMaxButton.dispatchEvent(clickEvent);
-                    console.log(`Click event dispatched for ${unitName}`);
+                    // First try: Direct Angular scope call
+                    try {
+                        const scope = angular.element(buyMaxButton).scope();
+                        if (scope && scope.buyMaxUnit) {
+                            console.log(`Calling scope.buyMaxUnit for ${unitName}`);
+                            scope.buyMaxUnit({unit: scope.unit, percent: 1});
+                            console.log(`Successfully called scope function for ${unitName}`);
+                        } else if (scope && scope.buyUnit) {
+                            console.log(`Calling scope.buyUnit for ${unitName}`);
+                            scope.buyUnit({unit: scope.unit, num: scope.fullnum()});
+                            console.log(`Successfully called scope function for ${unitName}`);
+                        } else {
+                            throw new Error('No scope functions found');
+                        }
+                    } catch (e) {
+                        console.log(`Scope call failed for ${unitName}, trying click:`, e.message);
+                        
+                        // Second try: Simulate click with jQuery if available
+                        if (window.jQuery) {
+                            console.log(`Using jQuery click for ${unitName}`);
+                            window.jQuery(buyMaxButton).trigger('click');
+                        } else {
+                            // Third try: Regular click
+                            console.log(`Using regular click for ${unitName}`);
+                            buyMaxButton.click();
+                        }
+                    }
 
                     // Close the dropdown after clicking
                     setTimeout(() => {
