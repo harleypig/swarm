@@ -272,42 +272,18 @@
                     const unitName = getUnitNameFromRow(unitRow);
                     console.log(`Clicking buy button for ${unitName}: ${buyMaxButton.getAttribute('ng-click')}`);
 
-                    // Try triggering the Angular click event directly
-                    const angularElement = angular.element(buyMaxButton);
-                    console.log(`Angular element found for ${unitName}:`, !!angularElement);
+                    // Trigger the click event that Angular will handle
+                    console.log(`Triggering click event for ${unitName}`);
                     
-                    if (angularElement && angularElement.scope) {
-                        const scope = angularElement.scope();
-                        console.log(`Scope found for ${unitName}:`, !!scope);
-                        
-                        if (scope) {
-                            // Try to call the function directly from scope
-                            try {
-                                if (buyMaxButton.getAttribute('ng-click').includes('buyMaxUnit')) {
-                                    console.log(`Calling buyMaxUnit for ${unitName}`);
-                                    scope.buyMaxUnit({unit: scope.unit, percent: 1});
-                                } else {
-                                    console.log(`Calling buyUnit for ${unitName}`);
-                                    scope.buyUnit({unit: scope.unit, num: scope.fullnum()});
-                                }
-                                console.log(`Successfully called Angular function for ${unitName}`);
-                            } catch (e) {
-                                // Check if it's just a "not enough resources" error, which is expected
-                                if (e.message && e.message.includes('require more resources')) {
-                                    console.log(`Not enough resources to buy ${unitName} (expected)`);
-                                } else {
-                                    console.log(`Angular function call failed for ${unitName}, trying regular click:`, e);
-                                    buyMaxButton.click();
-                                }
-                            }
-                        } else {
-                            console.log(`No scope found for ${unitName}, using regular click`);
-                            buyMaxButton.click();
-                        }
-                    } else {
-                        console.log(`No Angular element found for ${unitName}, using regular click`);
-                        buyMaxButton.click();
-                    }
+                    // Create and dispatch a proper click event
+                    const clickEvent = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
+                    });
+                    
+                    buyMaxButton.dispatchEvent(clickEvent);
+                    console.log(`Click event dispatched for ${unitName}`);
 
                     // Close the dropdown after clicking
                     setTimeout(() => {
