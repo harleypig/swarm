@@ -12,6 +12,20 @@
 (function() {
     'use strict';
 
+    // Suppress multistore warnings by intercepting console messages
+    const originalConsoleWarn = console.warn;
+    console.warn = function(...args) {
+        const message = args.join(' ');
+        // Filter out multistore/SwfStore warnings
+        if (message.includes('multistore.setItem error') || 
+            message.includes('SwfStore is not yet finished initializing') ||
+            message.includes('flash SwfStore')) {
+            return; // Suppress these warnings
+        }
+        // Allow other warnings through
+        originalConsoleWarn.apply(console, args);
+    };
+
     // Configuration variables - adjust these to tune the script behavior
     const CONFIG = {
         // Timing settings (in milliseconds)
