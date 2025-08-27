@@ -291,7 +291,7 @@
     // Check if game is fully ready (including storage system)
     function waitForGameReady(callback) {
         // Check if the game's storage system is ready
-        const storageReady = !document.querySelector('.loading') && 
+        const storageReady = !document.querySelector('.loading') &&
                             document.querySelector('.nav-tabs') &&
                             // Add checks for game state being loaded
                             document.querySelector('tr[ng-repeat*="unit"]') &&
