@@ -19,18 +19,18 @@
         INITIAL_DELAY: 15000,            // Wait time before initializing script (15 seconds)
         TAB_LOAD_DELAY: 1000,            // Wait time after clicking a tab (1 second)
         BETWEEN_TABS_DELAY: 1000,        // Delay between processing different tabs (1 second)
-        BETWEEN_PURCHASES_DELAY: 500,    // Delay between individual unit purchases (0.5 seconds)
+        BETWEEN_PURCHASES_DELAY: 1000,   // Delay between individual unit purchases (1 second)
         UPGRADE_DROPDOWN_DELAY: 200,     // Wait time after opening upgrade dropdown (0.2 seconds)
-        DROPDOWN_OPEN_DELAY: 100,        // Wait time after opening unit dropdown (0.1 seconds)
+        DROPDOWN_OPEN_DELAY: 200,        // Wait time after opening unit dropdown (0.2 seconds)
         COUNTDOWN_UPDATE_INTERVAL: 1000, // How often to update countdown display (1 second)
         ANGULAR_CHECK_INTERVAL: 500,     // How often to check if Angular is ready (0.5 seconds)
         GAME_READY_CHECK_INTERVAL: 1000, // How often to check if game is ready (1 second)
-        
+
         // UI settings
         BUTTON_TOP_POSITION: 10,         // Toggle button distance from top (pixels)
         BUTTON_RIGHT_POSITION: 10,       // Toggle button distance from right (pixels)
         BUTTON_Z_INDEX: 9999,            // Toggle button z-index
-        
+
         // Colors
         BUTTON_OFF_COLOR: '#ff4444',     // Button color when disabled (red)
         BUTTON_ON_COLOR: '#33cc33',      // Button color when enabled (darker green)
@@ -86,7 +86,7 @@
     // Start the auto-buyer interval
     function startAutoBuyer() {
         if (intervalId) clearInterval(intervalId);
-        
+
         // Run immediately when enabled
         isCurrentlyBuying = true;
         runAutoBuyer();
@@ -94,7 +94,7 @@
             isCurrentlyBuying = false;
             resetCountdown();
         }, CONFIG.BETWEEN_TABS_DELAY * 3); // Wait for all buying to complete
-        
+
         // Then set up the interval for future runs
         intervalId = setInterval(() => {
             isCurrentlyBuying = true;
@@ -122,13 +122,13 @@
     function startCountdown() {
         if (countdownId) clearInterval(countdownId);
         nextRunTime = Date.now() + CONFIG.AUTO_BUY_INTERVAL;
-        
+
         countdownId = setInterval(() => {
             if (!isEnabled) {
                 stopCountdown();
                 return;
             }
-            
+
             if (isCurrentlyBuying) {
                 toggleButton.innerHTML = 'Auto Buying...';
                 toggleButton.style.background = '#ffaa00'; // Orange while buying
@@ -223,7 +223,7 @@
         if (tabLink) {
             return tabLink;
         }
-        
+
         // If not found, the tab might not be available yet (like territory)
         console.log(`${tabName} tab not available yet`);
         return null;
@@ -234,42 +234,42 @@
         // First, find the buyunitdropdown component
         const dropdown = unitRow.querySelector('buyunitdropdown');
         if (!dropdown) return false;
-        
+
         // Check if the dropdown button shows "Can't buy"
         const dropdownButton = dropdown.querySelector('.dropdown-toggle');
         if (!dropdownButton) return false;
-        
+
         // Check if it says "Can't buy" - if so, skip this unit
         const buttonText = dropdownButton.textContent.trim();
         if (buttonText.includes("Can't buy")) {
             return false;
         }
-        
+
         // Click to open dropdown
         dropdownButton.click();
-        
+
         // Wait a moment, then find and click the buy max button
         setTimeout(() => {
             // Look for all available buy buttons in the dropdown
             const allBuyButtons = dropdown.querySelectorAll('a[ng-click*="buyMaxUnit"], a[ng-click*="buyUnit"]');
             console.log(`Found ${allBuyButtons.length} buy buttons for ${getUnitNameFromRow(unitRow)}`);
-            
+
             // Try to find the max buy button (percent:1) first
             let buyMaxButton = dropdown.querySelector('a[ng-click="buyMaxUnit({unit:unit, percent:1})"]');
-            
+
             // If no max button, try the regular buy button
             if (!buyMaxButton) {
                 buyMaxButton = dropdown.querySelector('a[ng-click="buyUnit({unit:unit, num:fullnum()})"]');
                 console.log(`Using regular buy button instead of max for ${getUnitNameFromRow(unitRow)}`);
             }
-            
+
             if (buyMaxButton) {
                 // Check if the parent li is disabled
                 const parentLi = buyMaxButton.closest('li');
                 if (parentLi && !parentLi.classList.contains('disabled')) {
                     const unitName = getUnitNameFromRow(unitRow);
                     console.log(`Clicking buy button for ${unitName}: ${buyMaxButton.getAttribute('ng-click')}`);
-                    
+
                     // Try triggering the Angular click event directly
                     const angularElement = angular.element(buyMaxButton);
                     if (angularElement && angularElement.scope) {
@@ -298,7 +298,7 @@
                     } else {
                         buyMaxButton.click();
                     }
-                    
+
                     // Close the dropdown after clicking
                     setTimeout(() => {
                         document.body.click();
@@ -312,7 +312,7 @@
                 document.body.click();
             }
         }, CONFIG.DROPDOWN_OPEN_DELAY * 3); // Increase delay even more
-        
+
         return true;
     }
 
@@ -342,9 +342,9 @@
         if (!moreDropdown || !moreDropdown.textContent.includes('More')) {
             return;
         }
-        
+
         moreDropdown.click();
-        
+
         setTimeout(() => {
             // Use exact selectors from tabs.html
             const buyAllUpgrades = document.querySelector('a[ng-click="buyAllUpgrades()"]');
@@ -352,13 +352,13 @@
                 console.log('Buying all available upgrades');
                 buyAllUpgrades.click();
             }
-            
+
             const buyCheapestUpgrades = document.querySelector('a[ng-click="buyCheapestUpgrades()"]');
             if (buyCheapestUpgrades && !buyCheapestUpgrades.parentElement.classList.contains('disabled')) {
                 console.log('Buying cheapest upgrades');
                 buyCheapestUpgrades.click();
             }
-            
+
             // Close dropdown
             document.body.click();
         }, CONFIG.UPGRADE_DROPDOWN_DELAY);
@@ -376,13 +376,13 @@
     // Check if game is fully ready (including storage system)
     function waitForGameReady(callback) {
         // Check if storage system is ready
-        const storageReady = !document.querySelector('.loading') && 
+        const storageReady = !document.querySelector('.loading') &&
                             document.querySelector('.nav-tabs') &&
                             // Add checks for game state being loaded
                             document.querySelector('tr[ng-repeat*="unit"]') &&
                             // Check if any units are visible (indicates data is loaded)
                             document.querySelectorAll('tr[ng-repeat*="unit"]').length > 0;
-        
+
         if (window.angular && document.querySelector('[ng-app]') && storageReady) {
             callback();
         } else {
