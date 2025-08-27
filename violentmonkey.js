@@ -284,8 +284,13 @@
                                 }
                                 console.log(`Successfully called Angular function for ${unitName}`);
                             } catch (e) {
-                                console.log(`Angular function call failed for ${unitName}, trying regular click:`, e);
-                                buyMaxButton.click();
+                                // Check if it's just a "not enough resources" error, which is expected
+                                if (e.message && e.message.includes('require more resources')) {
+                                    console.log(`Not enough resources to buy ${unitName} (expected)`);
+                                } else {
+                                    console.log(`Angular function call failed for ${unitName}, trying regular click:`, e);
+                                    buyMaxButton.click();
+                                }
                             }
                         } else {
                             buyMaxButton.click();
