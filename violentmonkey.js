@@ -275,22 +275,22 @@
                     // Try multiple approaches to trigger the purchase
                     console.log(`Attempting purchase for ${unitName}`);
 
-                    // First try: Direct Angular scope call
+                    // First try: Get scope from the dropdown component itself
                     try {
-                        const scope = angular.element(buyMaxButton).scope();
-                        if (scope && scope.buyMaxUnit) {
-                            console.log(`Calling scope.buyMaxUnit for ${unitName}`);
-                            scope.buyMaxUnit({unit: scope.unit, percent: 1});
-                            console.log(`Successfully called scope function for ${unitName}`);
-                        } else if (scope && scope.buyUnit) {
-                            console.log(`Calling scope.buyUnit for ${unitName}`);
-                            scope.buyUnit({unit: scope.unit, num: scope.fullnum()});
-                            console.log(`Successfully called scope function for ${unitName}`);
+                        const dropdownScope = angular.element(dropdown).scope();
+                        if (dropdownScope && dropdownScope.buyMaxUnit) {
+                            console.log(`Calling dropdownScope.buyMaxUnit for ${unitName}`);
+                            dropdownScope.buyMaxUnit({unit: dropdownScope.unit, percent: 1});
+                            console.log(`Successfully called dropdown scope function for ${unitName}`);
+                        } else if (dropdownScope && dropdownScope.buyUnit) {
+                            console.log(`Calling dropdownScope.buyUnit for ${unitName}`);
+                            dropdownScope.buyUnit({unit: dropdownScope.unit, num: dropdownScope.fullnum()});
+                            console.log(`Successfully called dropdown scope function for ${unitName}`);
                         } else {
-                            throw new Error('No scope functions found');
+                            throw new Error('No dropdown scope functions found');
                         }
                     } catch (e) {
-                        console.log(`Scope call failed for ${unitName}, trying click:`, e.message);
+                        console.log(`Dropdown scope call failed for ${unitName}, trying click:`, e.message);
 
                         // Second try: Simulate click with jQuery if available
                         if (window.jQuery) {
