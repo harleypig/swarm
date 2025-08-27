@@ -309,9 +309,6 @@
                     // Try multiple approaches to trigger the purchase
                     console.log(`Attempting purchase for ${unitName}`);
 
-                    // Try multiple purchase methods in sequence
-                    console.log(`Attempting purchase for ${unitName}`);
-
                     // Method 1: Try different event types and timing
                     function tryEventSequence() {
                         console.log(`Trying event sequence for ${unitName}`);
@@ -342,15 +339,15 @@
                         console.log(`Trying jQuery events for ${unitName}`);
                         if (window.jQuery) {
                             const $button = window.jQuery(buyMaxButton);
-
+                            
                             $button.focus()
                                    .trigger('mouseenter')
-                                   .trigger('mouseover')
+                                   .trigger('mouseover') 
                                    .trigger('mousedown')
                                    .trigger('mouseup')
                                    .trigger('click')
                                    .trigger('change');
-
+                                   
                             // Also try triggering with event data
                             $button.trigger('click', [{ synthetic: true }]);
                         }
@@ -394,7 +391,7 @@
                     // Method 4: Simulate exact Bootstrap dropdown behavior
                     function tryBootstrapDropdown() {
                         console.log(`Trying Bootstrap dropdown simulation for ${unitName}`);
-
+                        
                         setTimeout(() => {
                             if (dropdown.classList.contains('open')) {
                                 const dropdownScope = angular.element(dropdown).scope();
@@ -420,7 +417,7 @@
                     // Method 5: Use browser's native form submission
                     function tryFormSubmission() {
                         console.log(`Trying form submission for ${unitName}`);
-
+                        
                         const form = buyMaxButton.closest('form');
                         if (form) {
                             form.submit();
@@ -465,99 +462,4 @@
 
         return true;
     }
-
-    // Get unit name from a table row
-    function getUnitNameFromRow(unitRow) {
-        // Look for the unit label
-        const labelElement = unitRow.querySelector('.label-label, .titlecase, .unselectedlist-label');
-        if (labelElement) {
-            return labelElement.textContent.trim();
-        }
-
-        // Fallback: look for any text that might be the unit name
-        const cells = unitRow.querySelectorAll('td');
-        if (cells.length > 1) {
-            return cells[1].textContent.trim();
-        }
-
-        return 'Unknown Unit';
-    }
-
-    // Buy upgrades using the "Buy all upgrades" button
-    function buyUpgrades() {
-        console.log('Looking for upgrade buttons...');
-
-        // Find the More... dropdown specifically
-        const moreDropdown = document.querySelector('.dropdown a.dropdown-toggle');
-        if (!moreDropdown || !moreDropdown.textContent.includes('More')) {
-            return;
-        }
-
-        moreDropdown.click();
-
-        setTimeout(() => {
-            // Use exact selectors from tabs.html
-            const buyAllUpgrades = document.querySelector('a[ng-click="buyAllUpgrades()"]');
-            if (buyAllUpgrades && !buyAllUpgrades.parentElement.classList.contains('disabled')) {
-                console.log('Buying all available upgrades');
-                buyAllUpgrades.click();
-            }
-
-            const buyCheapestUpgrades = document.querySelector('a[ng-click="buyCheapestUpgrades()"]');
-            if (buyCheapestUpgrades && !buyCheapestUpgrades.parentElement.classList.contains('disabled')) {
-                console.log('Buying cheapest upgrades');
-                buyCheapestUpgrades.click();
-            }
-
-            // Close dropdown
-            document.body.click();
-        }, CONFIG.UPGRADE_DROPDOWN_DELAY);
-    }
-
-    // Wait for Angular to be ready
-    function waitForAngular(callback) {
-        if (window.angular && document.querySelector('[ng-app]')) {
-            callback();
-        } else {
-            setTimeout(() => waitForAngular(callback), CONFIG.ANGULAR_CHECK_INTERVAL);
-        }
-    }
-
-    // Check if game is fully ready (including storage system)
-    function waitForGameReady(callback) {
-        // Check if storage system is ready
-        const storageReady = !document.querySelector('.loading') &&
-                            document.querySelector('.nav-tabs') &&
-                            // Add checks for game state being loaded
-                            document.querySelector('tr[ng-repeat*="unit"]') &&
-                            // Check if any units are visible (indicates data is loaded)
-                            document.querySelectorAll('tr[ng-repeat*="unit"]').length > 0;
-
-        if (window.angular && document.querySelector('[ng-app]') && storageReady) {
-            callback();
-        } else {
-            setTimeout(() => waitForGameReady(callback), CONFIG.GAME_READY_CHECK_INTERVAL);
-        }
-    }
-
-    // Initialize when page loads
-    function initialize() {
-        // Wait for page to be ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initialize);
-            return;
-        }
-
-        // Wait for Angular and game to be ready
-        waitForAngular(() => {
-            waitForGameReady(() => {
-                setTimeout(() => {
-                    createToggleButton();
-                    console.log('Swarm Simulator Auto-Buyer initialized');
-                }, CONFIG.INITIAL_DELAY);
-            });
-        });
-    }
-
-    initialize();
-})();
+>>>>>>> REPLACE
