@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Swarm Simulator Auto-Buyer
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  Auto-buy meat, territory, and upgrades in Swarm Simulator
 // @author       harleypig
 // @match        https://swarmsim.com/*
@@ -11,6 +11,28 @@
 
 (function() {
     'use strict';
+
+    // Configuration variables - adjust these to tune the script behavior
+    const CONFIG = {
+        // Timing settings (in milliseconds)
+        AUTO_BUY_INTERVAL: 60000,        // How often to run auto-buyer (1 minute)
+        INITIAL_DELAY: 5000,             // Wait time before initializing script (5 seconds)
+        TAB_LOAD_DELAY: 1000,            // Wait time after clicking a tab (1 second)
+        BETWEEN_TABS_DELAY: 1000,        // Delay between processing different tabs (1 second)
+        BETWEEN_PURCHASES_DELAY: 500,    // Delay between individual unit purchases (0.5 seconds)
+        UPGRADE_DROPDOWN_DELAY: 200,     // Wait time after opening upgrade dropdown (0.2 seconds)
+        ANGULAR_CHECK_INTERVAL: 500,     // How often to check if Angular is ready (0.5 seconds)
+        GAME_READY_CHECK_INTERVAL: 1000, // How often to check if game is ready (1 second)
+        
+        // UI settings
+        BUTTON_TOP_POSITION: 10,         // Toggle button distance from top (pixels)
+        BUTTON_RIGHT_POSITION: 10,       // Toggle button distance from right (pixels)
+        BUTTON_Z_INDEX: 9999,            // Toggle button z-index
+        
+        // Colors
+        BUTTON_OFF_COLOR: '#ff4444',     // Button color when disabled (red)
+        BUTTON_ON_COLOR: '#44ff44',      // Button color when enabled (green)
+    };
 
     let isEnabled = false;
     let intervalId = null;
@@ -22,11 +44,11 @@
         toggleButton.innerHTML = 'Auto-Buyer: OFF';
         toggleButton.style.cssText = `
             position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 9999;
+            top: ${CONFIG.BUTTON_TOP_POSITION}px;
+            right: ${CONFIG.BUTTON_RIGHT_POSITION}px;
+            z-index: ${CONFIG.BUTTON_Z_INDEX};
             padding: 10px;
-            background: #ff4444;
+            background: ${CONFIG.BUTTON_OFF_COLOR};
             color: white;
             border: none;
             border-radius: 5px;
@@ -45,11 +67,11 @@
 
         if (isEnabled) {
             toggleButton.innerHTML = 'Auto-Buyer: ON';
-            toggleButton.style.background = '#44ff44';
+            toggleButton.style.background = CONFIG.BUTTON_ON_COLOR;
             startAutoBuyer();
         } else {
             toggleButton.innerHTML = 'Auto-Buyer: OFF';
-            toggleButton.style.background = '#ff4444';
+            toggleButton.style.background = CONFIG.BUTTON_OFF_COLOR;
             stopAutoBuyer();
         }
     }
@@ -57,7 +79,7 @@
     // Start the auto-buyer interval
     function startAutoBuyer() {
         if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(runAutoBuyer, 60000); // Run every minute
+        intervalId = setInterval(runAutoBuyer, CONFIG.AUTO_BUY_INTERVAL);
         console.log('Swarm Simulator Auto-Buyer started');
     }
 
@@ -88,8 +110,8 @@
             setTimeout(() => {
                 // Buy upgrades
                 buyUpgrades();
-            }, 1000);
-        }, 1000);
+            }, CONFIG.BETWEEN_TABS_DELAY);
+        }, CONFIG.BETWEEN_TABS_DELAY);
     }
 
     // Buy units in a specific tab (meat or territory)
@@ -119,10 +141,10 @@
                 // Check if this unit has buy buttons and try to buy max
                 if (tryBuyMaxForUnit(unitRow)) {
                     // Small delay between purchases
-                    setTimeout(() => {}, 100);
+                    setTimeout(() => {}, CONFIG.BETWEEN_PURCHASES_DELAY);
                 }
             }
-        }, 500);
+        }, CONFIG.TAB_LOAD_DELAY);
     }
 
     // Find tab by name
@@ -217,7 +239,7 @@
 
                 // Close dropdown by clicking elsewhere
                 document.body.click();
-            }, 200);
+            }, CONFIG.UPGRADE_DROPDOWN_DELAY);
         }
     }
 
@@ -226,7 +248,20 @@
         if (window.angular && document.querySelector('[ng-app]')) {
             callback();
         } else {
-            setTimeout(() => waitForAngular(callback), 500);
+            setTimeout(() => waitForAngular(callback), CONFIG.ANGULAR_CHECK_INTERVAL);
+        }
+    }
+
+    // Check if game is fully ready (including storage system)
+    function waitForGameReady(callback) {
+        // Check if the game's storage system is ready
+        if (window.angular && 
+            document.querySelector('[ng-app]') && 
+            !document.querySelector('.loading') && // No loading indicators
+            document.querySelector('.nav-tabs')) { // Main UI is loaded
+            callback();
+        } else {
+            setTimeout(() => waitForGameReady(callback), CONFIG.GAME_READY_CHECK_INTERVAL);
         }
     }
 
@@ -238,12 +273,14 @@
             return;
         }
 
-        // Wait for Angular to initialize
+        // Wait for Angular and game to be ready
         waitForAngular(() => {
-            setTimeout(() => {
-                createToggleButton();
-                console.log('Swarm Simulator Auto-Buyer initialized');
-            }, 2000);
+            waitForGameReady(() => {
+                setTimeout(() => {
+                    createToggleButton();
+                    console.log('Swarm Simulator Auto-Buyer initialized');
+                }, CONFIG.INITIAL_DELAY);
+            });
         });
     }
 
