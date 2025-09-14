@@ -24,7 +24,7 @@
         // Meat/Territory unit buying settings (in milliseconds)
         TAB_LOAD_DELAY: 1000,            // Wait time after clicking a tab (1 second)
         BETWEEN_TABS_DELAY: 1000,        // Delay between processing different tabs (1 second)
-        BETWEEN_PURCHASES_DELAY: 1000,   // Delay between individual unit purchases (1 second)
+        BETWEEN_PURCHASES_DELAY: 500,    // Delay between individual unit purchases (0.5 seconds)
         DROPDOWN_OPEN_DELAY: 200,        // Wait time after opening unit dropdown (0.2 seconds)
 
         // Upgrade buying settings (in milliseconds)
