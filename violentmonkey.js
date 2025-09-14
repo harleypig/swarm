@@ -16,7 +16,7 @@
     const CONFIG = {
         // General timing settings (in milliseconds)
         AUTO_BUY_INTERVAL: 30000,        // How often to run auto-buyer (30 seconds)
-        INITIAL_DELAY: 15000,            // Wait time before initializing script (15 seconds)
+        INITIAL_DELAY: 5000,             // Wait time before initializing script (5 seconds)
         COUNTDOWN_UPDATE_INTERVAL: 1000, // How often to update countdown display (1 second)
         ANGULAR_CHECK_INTERVAL: 500,     // How often to check if Angular is ready (0.5 seconds)
         GAME_READY_CHECK_INTERVAL: 1000, // How often to check if game is ready (1 second)
