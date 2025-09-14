@@ -34,8 +34,12 @@
         BUTTON_TOP_POSITION: 10,         // Toggle button distance from top (pixels)
         BUTTON_RIGHT_POSITION: 10,       // Toggle button distance from right (pixels)
         BUTTON_Z_INDEX: 9999,            // Toggle button z-index
-        BUTTON_OFF_COLOR: '#ff4444',     // Button color when disabled (red)
-        BUTTON_ON_COLOR: '#33cc33',      // Button color when enabled (darker green)
+        BUTTON_OFF_FG_COLOR: 'white',    // Button text color when disabled
+        BUTTON_OFF_BG_COLOR: '#ff4444',  // Button background color when disabled (red)
+        BUTTON_ON_FG_COLOR: 'white',     // Button text color when enabled
+        BUTTON_ON_BG_COLOR: '#33cc33',   // Button background color when enabled (darker green)
+        BUTTON_BUYING_FG_COLOR: 'white', // Button text color while buying
+        BUTTON_BUYING_BG_COLOR: '#ffaa00', // Button background color while buying (orange)
     };
 
     let isEnabled = false;
@@ -55,8 +59,8 @@
             right: ${CONFIG.BUTTON_RIGHT_POSITION}px;
             z-index: ${CONFIG.BUTTON_Z_INDEX};
             padding: 10px;
-            background: ${CONFIG.BUTTON_OFF_COLOR};
-            color: white;
+            background: ${CONFIG.BUTTON_OFF_BG_COLOR};
+            color: ${CONFIG.BUTTON_OFF_FG_COLOR};
             border: none;
             border-radius: 5px;
             cursor: pointer;
@@ -79,7 +83,8 @@
             startCountdown();
         } else {
             toggleButton.innerHTML = 'Auto-Buyer: OFF';
-            toggleButton.style.background = CONFIG.BUTTON_OFF_COLOR;
+            toggleButton.style.background = CONFIG.BUTTON_OFF_BG_COLOR;
+            toggleButton.style.color = CONFIG.BUTTON_OFF_FG_COLOR;
             stopAutoBuyer();
             stopCountdown();
         }
@@ -118,18 +123,21 @@
 
             if (isCurrentlyBuying) {
                 toggleButton.innerHTML = 'Auto buying...';
-                toggleButton.style.background = '#ffaa00'; // Orange while buying
+                toggleButton.style.background = CONFIG.BUTTON_BUYING_BG_COLOR;
+                toggleButton.style.color = CONFIG.BUTTON_BUYING_FG_COLOR;
             } else {
                 const timeLeft = Math.max(0, Math.ceil((nextRunTime - Date.now()) / 1000));
                 if (timeLeft > 0) {
                     toggleButton.innerHTML = `Auto buy in ${timeLeft}s`;
-                    toggleButton.style.background = CONFIG.BUTTON_ON_COLOR;
+                    toggleButton.style.background = CONFIG.BUTTON_ON_BG_COLOR;
+                    toggleButton.style.color = CONFIG.BUTTON_ON_FG_COLOR;
                 } else {
                     // Countdown finished - trigger next auto-buy cycle
                     stopCountdown();
                     isCurrentlyBuying = true;
                     toggleButton.innerHTML = 'Auto buying...';
-                    toggleButton.style.background = '#ffaa00';
+                    toggleButton.style.background = CONFIG.BUTTON_BUYING_BG_COLOR;
+                    toggleButton.style.color = CONFIG.BUTTON_BUYING_FG_COLOR;
                     
                     runAutoBuyer().then(() => {
                         isCurrentlyBuying = false;
