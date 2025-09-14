@@ -91,20 +91,17 @@
 
         // Run immediately when enabled
         isCurrentlyBuying = true;
-        runAutoBuyer();
-        setTimeout(() => {
+        runAutoBuyer().then(() => {
             isCurrentlyBuying = false;
             resetCountdown();
-        }, CONFIG.BETWEEN_TABS_DELAY * 3); // Wait for all buying to complete
+        });
 
         // Then set up the interval for future runs
-        intervalId = setInterval(() => {
+        intervalId = setInterval(async () => {
             isCurrentlyBuying = true;
-            runAutoBuyer();
-            setTimeout(() => {
-                isCurrentlyBuying = false;
-                resetCountdown();
-            }, CONFIG.BETWEEN_TABS_DELAY * 3); // Wait for all buying to complete
+            await runAutoBuyer();
+            isCurrentlyBuying = false;
+            resetCountdown();
         }, CONFIG.AUTO_BUY_INTERVAL);
         console.log('Swarm Simulator Auto-Buyer started');
     }
