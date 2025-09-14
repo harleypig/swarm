@@ -40,6 +40,17 @@
         BUTTON_ON_BG_COLOR: '#33cc33',   // Button background color when enabled (darker green)
         BUTTON_BUYING_FG_COLOR: 'white', // Button text color while buying
         BUTTON_BUYING_BG_COLOR: '#ffaa00', // Button background color while buying (orange)
+        
+        // Event timing settings (in milliseconds)
+        EVENT_SEQUENCE_DELAY: 10,        // Delay between individual mouse events in sequence
+        DROPDOWN_CLOSE_DELAY: 100,       // Delay before closing dropdown after purchase
+        BOOTSTRAP_DROPDOWN_DELAY: 100,   // Delay for Bootstrap dropdown simulation
+        
+        // Button styling
+        BUTTON_PADDING: 10,              // Button padding (pixels)
+        BUTTON_MIN_WIDTH: 200,           // Button minimum width (pixels)
+        BUTTON_BORDER_RADIUS: 5,         // Button border radius (pixels)
+        BUTTON_SHADOW_BLUR: 5,           // Button shadow blur radius (pixels)
     };
 
     let isEnabled = false;
@@ -58,15 +69,15 @@
             top: ${CONFIG.BUTTON_TOP_POSITION}px;
             right: ${CONFIG.BUTTON_RIGHT_POSITION}px;
             z-index: ${CONFIG.BUTTON_Z_INDEX};
-            padding: 10px;
+            padding: ${CONFIG.BUTTON_PADDING}px;
             background: ${CONFIG.BUTTON_OFF_BG_COLOR};
             color: ${CONFIG.BUTTON_OFF_FG_COLOR};
             border: none;
-            border-radius: 5px;
+            border-radius: ${CONFIG.BUTTON_BORDER_RADIUS}px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            min-width: 200px;
+            box-shadow: 0 2px ${CONFIG.BUTTON_SHADOW_BLUR}px rgba(0,0,0,0.3);
+            min-width: ${CONFIG.BUTTON_MIN_WIDTH}px;
             text-align: center;
         `;
 
@@ -337,7 +348,7 @@
                                     button: eventConfig.button || 0
                                 });
                                 buyMaxButton.dispatchEvent(event);
-                            }, index * 10);
+                            }, index * CONFIG.EVENT_SEQUENCE_DELAY);
                         });
                     }
 
@@ -418,7 +429,7 @@
                                 }
                             }
                             return false;
-                        }, 100);
+                        }, CONFIG.BOOTSTRAP_DROPDOWN_DELAY);
                     }
 
                     // Method 5: Use browser's native form submission
@@ -456,7 +467,7 @@
                     // Close the dropdown after clicking
                     setTimeout(() => {
                         document.body.click();
-                    }, 100);
+                    }, CONFIG.DROPDOWN_CLOSE_DELAY);
                 } else {
                     console.log(`Buy button disabled for ${getUnitNameFromRow(unitRow)}`);
                 }
