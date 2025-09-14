@@ -164,29 +164,29 @@
     }
 
     // Main auto-buyer logic
-    function runAutoBuyer() {
+    async function runAutoBuyer() {
         if (!isEnabled) return;
 
         console.log('Running auto-buyer cycle...');
 
-        // Buy meat units
-        buyUnitsInTab('meat');
+        // Buy meat units and wait for completion
+        await buyUnitsInTab('meat');
 
         // Small delay between tabs
-        setTimeout(() => {
-            // Buy territory units
-            buyUnitsInTab('territory');
+        await new Promise(resolve => setTimeout(resolve, CONFIG.BETWEEN_TABS_DELAY));
 
-            // Small delay before upgrades
-            setTimeout(() => {
-                // Buy upgrades
-                buyUpgrades();
-            }, CONFIG.BETWEEN_TABS_DELAY);
-        }, CONFIG.BETWEEN_TABS_DELAY);
+        // Buy territory units and wait for completion
+        await buyUnitsInTab('territory');
+
+        // Small delay before upgrades
+        await new Promise(resolve => setTimeout(resolve, CONFIG.BETWEEN_TABS_DELAY));
+
+        // Buy upgrades
+        buyUpgrades();
     }
 
     // Buy units in a specific tab (meat or territory)
-    function buyUnitsInTab(tabName) {
+    async function buyUnitsInTab(tabName) {
         console.log(`Processing ${tabName} tab...`);
 
         // Click the tab - look for tab with specific name
@@ -200,22 +200,24 @@
         tab.click();
 
         // Wait for tab content to load
-        setTimeout(() => {
-            // Get all unit rows in the current tab - use specific selector from main.html
-            const unitRows = document.querySelectorAll('tr[ng-repeat="unit in cur.tab.sortUnits() | filter:filterVisible track by unit.name"]');
+        return new Promise((resolve) => {
+            setTimeout(async () => {
+                // Get all unit rows in the current tab - use specific selector from main.html
+                const unitRows = document.querySelectorAll('tr[ng-repeat="unit in cur.tab.sortUnits() | filter:filterVisible track by unit.name"]');
 
-            // Process units from bottom to top (reverse order)
-            const unitsArray = Array.from(unitRows);
-            for (let i = unitsArray.length - 1; i >= 0; i--) {
-                const unitRow = unitsArray[i];
+                // Process units from bottom to top (reverse order) sequentially
+                const unitsArray = Array.from(unitRows);
+                for (let i = unitsArray.length - 1; i >= 0; i--) {
+                    const unitRow = unitsArray[i];
 
-                // Check if this unit has buy buttons and try to buy max
-                if (tryBuyMaxForUnit(unitRow)) {
-                    // Small delay between purchases
-                    setTimeout(() => {}, CONFIG.BETWEEN_PURCHASES_DELAY);
+                    // Wait for each unit purchase to complete before moving to next
+                    await tryBuyMaxForUnit(unitRow);
+                    await new Promise(resolve => setTimeout(resolve, CONFIG.BETWEEN_PURCHASES_DELAY));
                 }
-            }
-        }, CONFIG.TAB_LOAD_DELAY);
+                
+                resolve();
+            }, CONFIG.TAB_LOAD_DELAY);
+        });
     }
 
     // Find tab by name
@@ -233,25 +235,33 @@
 
     // Try to buy max for a specific unit
     function tryBuyMaxForUnit(unitRow) {
-        // First, find the buyunitdropdown component
-        const dropdown = unitRow.querySelector('buyunitdropdown');
-        if (!dropdown) return false;
+        return new Promise((resolve) => {
+            // First, find the buyunitdropdown component
+            const dropdown = unitRow.querySelector('buyunitdropdown');
+            if (!dropdown) {
+                resolve(false);
+                return;
+            }
 
-        // Check if the dropdown button shows "Can't buy"
-        const dropdownButton = dropdown.querySelector('.dropdown-toggle');
-        if (!dropdownButton) return false;
+            // Check if the dropdown button shows "Can't buy"
+            const dropdownButton = dropdown.querySelector('.dropdown-toggle');
+            if (!dropdownButton) {
+                resolve(false);
+                return;
+            }
 
-        // Check if it says "Can't buy" - if so, skip this unit
-        const buttonText = dropdownButton.textContent.trim();
-        if (buttonText.includes("Can't buy")) {
-            return false;
-        }
+            // Check if it says "Can't buy" - if so, skip this unit
+            const buttonText = dropdownButton.textContent.trim();
+            if (buttonText.includes("Can't buy")) {
+                resolve(false);
+                return;
+            }
 
-        // Click to open dropdown
-        dropdownButton.click();
+            // Click to open dropdown
+            dropdownButton.click();
 
-        // Wait a moment, then find and click the buy max button
-        setTimeout(() => {
+            // Wait a moment, then find and click the buy max button
+            setTimeout(() => {
             // Look for all available buy buttons in the dropdown
             const allBuyButtons = dropdown.querySelectorAll('a[ng-click*="buyMaxUnit"], a[ng-click*="buyUnit"]');
             console.log(`Found ${allBuyButtons.length} buy buttons for ${getUnitNameFromRow(unitRow)}`);
@@ -461,9 +471,10 @@
                 // Close dropdown if button not found
                 document.body.click();
             }
+            
+            resolve(true);
         }, CONFIG.DROPDOWN_OPEN_DELAY * 3); // Increase delay even more
-
-        return true;
+        });
     }
 
     // Get unit name from a table row
