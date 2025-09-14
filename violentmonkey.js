@@ -85,40 +85,28 @@
         }
     }
 
-    // Start the auto-buyer interval
+    // Start the auto-buyer (run once immediately, then start countdown)
     function startAutoBuyer() {
-        if (intervalId) clearInterval(intervalId);
-
         // Run immediately when enabled
         isCurrentlyBuying = true;
         runAutoBuyer().then(() => {
             isCurrentlyBuying = false;
-            resetCountdown();
+            startCountdown(); // Start countdown for next run
         });
-
-        // Then set up the interval for future runs
-        intervalId = setInterval(async () => {
-            isCurrentlyBuying = true;
-            await runAutoBuyer();
-            isCurrentlyBuying = false;
-            resetCountdown();
-        }, CONFIG.AUTO_BUY_INTERVAL);
         console.log('Swarm Simulator Auto-Buyer started');
     }
 
-    // Stop the auto-buyer interval
+    // Stop the auto-buyer
     function stopAutoBuyer() {
-        if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-        }
-        isCurrentlyBuying = false;
         stopCountdown();
+        isCurrentlyBuying = false;
         console.log('Swarm Simulator Auto-Buyer stopped');
     }
 
-    // Start countdown display
+    // Start countdown display and trigger next auto-buy when done
     function startCountdown() {
+        if (!isEnabled) return; // Don't start countdown if disabled
+        
         if (countdownId) clearInterval(countdownId);
         nextRunTime = Date.now() + CONFIG.AUTO_BUY_INTERVAL;
 
@@ -137,8 +125,16 @@
                     toggleButton.innerHTML = `Auto buy in ${timeLeft}s`;
                     toggleButton.style.background = CONFIG.BUTTON_ON_COLOR;
                 } else {
+                    // Countdown finished - trigger next auto-buy cycle
+                    stopCountdown();
+                    isCurrentlyBuying = true;
                     toggleButton.innerHTML = 'Auto buying...';
                     toggleButton.style.background = '#ffaa00';
+                    
+                    runAutoBuyer().then(() => {
+                        isCurrentlyBuying = false;
+                        startCountdown(); // Start countdown for next cycle
+                    });
                 }
             }
         }, CONFIG.COUNTDOWN_UPDATE_INTERVAL);
@@ -151,13 +147,6 @@
             countdownId = null;
         }
         nextRunTime = null;
-    }
-
-    // Reset countdown after auto-buy completes
-    function resetCountdown() {
-        if (isEnabled) {
-            nextRunTime = Date.now() + CONFIG.AUTO_BUY_INTERVAL;
-        }
     }
 
     // Main auto-buyer logic
