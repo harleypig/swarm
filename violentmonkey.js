@@ -27,6 +27,14 @@
         BETWEEN_PURCHASES_DELAY: 500,    // Delay between individual unit purchases (0.5 seconds)
         DROPDOWN_OPEN_DELAY: 200,        // Wait time after opening unit dropdown (0.2 seconds)
 
+        // Energy unit buying settings
+        ENERGY_UNITS: {
+            'nightbug': { cost: 10, maxVal: 6, val2: 0.001 },
+            'lepidoptera': { cost: 10, maxVal: 2, val2: 0.001 }, // Note: display name is "lepidoptera"
+            'bat': { cost: 100, maxVal: 1.6, val2: 0.001 }
+        },
+        ENERGY_PERCENTAGE_TARGET: 0.1,  // Buy if it increases percentage by at least 0.1%
+
         // Upgrade buying settings (in milliseconds)
         UPGRADE_DROPDOWN_DELAY: 200,     // Wait time after opening upgrade dropdown (0.2 seconds)
 
@@ -183,6 +191,12 @@
         // Buy territory units and wait for completion
         await buyUnitsInTab('territory');
 
+        // Small delay between tabs
+        await new Promise(resolve => setTimeout(resolve, CONFIG.BETWEEN_TABS_DELAY));
+
+        // Buy energy units and wait for completion
+        await buyEnergyUnits();
+
         // Small delay before upgrades
         await new Promise(resolve => setTimeout(resolve, CONFIG.BETWEEN_TABS_DELAY));
 
@@ -298,7 +312,7 @@
 
                 if (buyMatch) {
                     const buyAmount = parseFloat(buyMatch[1]);
-                    const currentCount = parseFloat(currentCountText.replace(/[,]/g, ''));
+                    const currentCount = getCurrentUnitCount(unitRow);
 
                     console.log(`${unitName}: Current=${currentCountText}, Buy=${buyMatch[1]}`);
 
@@ -497,6 +511,56 @@
         }
 
         return 'Unknown Unit';
+    }
+
+    // Extract current count logic into a reusable function
+    function getCurrentUnitCount(unitRow) {
+        const currentCountCell = unitRow.querySelector('td:nth-child(3)');
+        const currentCountText = currentCountCell ? currentCountCell.textContent.trim() : '0';
+        return parseFloat(currentCountText.replace(/[,]/g, ''));
+    }
+
+    // Calculate percentage improvement for energy units
+    function calculatePercentageImprovement(unitName, currentCount, config) {
+        const currentWeight = currentCount * config.val2;
+        const nextWeight = (currentCount + 1) * config.val2;
+        
+        const currentMult = 1 + (config.maxVal - 1) * (1 - 1/(1 + currentWeight));
+        const nextMult = 1 + (config.maxVal - 1) * (1 - 1/(1 + nextWeight));
+        
+        const currentPercentage = (currentMult - 1) / (config.maxVal - 1) * 100;
+        const nextPercentage = (nextMult - 1) / (config.maxVal - 1) * 100;
+        
+        return nextPercentage - currentPercentage;
+    }
+
+    // Buy energy units based on percentage improvement
+    async function buyEnergyUnits() {
+        console.log('Processing energy units...');
+        
+        const energyTab = findTab('energy');
+        if (!energyTab) return;
+        
+        energyTab.click();
+        await new Promise(resolve => setTimeout(resolve, CONFIG.TAB_LOAD_DELAY));
+        
+        const unitRows = document.querySelectorAll('tr[ng-repeat="unit in cur.tab.sortUnits() | filter:filterVisible track by unit.name"]');
+        
+        for (const unitRow of unitRows) {
+            const unitName = getUnitNameFromRow(unitRow);
+            const config = CONFIG.ENERGY_UNITS[unitName];
+            
+            if (config) {
+                const currentCount = getCurrentUnitCount(unitRow);
+                const improvement = calculatePercentageImprovement(unitName, currentCount, config);
+                
+                if (improvement >= CONFIG.ENERGY_PERCENTAGE_TARGET) {
+                    console.log(`${unitName}: ${improvement.toFixed(3)}% improvement available`);
+                    await tryBuyMaxForUnit(unitRow);
+                    await new Promise(resolve => setTimeout(resolve, CONFIG.BETWEEN_PURCHASES_DELAY));
+                }
+            }
+        }
     }
 
     // Buy upgrades using the "Buy all upgrades" button
