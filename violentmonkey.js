@@ -640,7 +640,7 @@
                     <tr style="border-bottom: 1px solid #555;">
                         <th style="text-align: right; padding: 4px; border-right: 1px solid #555;">Unit</th>
                         <th style="text-align: right; padding: 4px; border-right: 1px solid #555;">Current %</th>
-                        <th style="text-align: right; padding: 4px; border-right: 1px solid #555;">Energy Need</th>
+                        <th style="text-align: right; padding: 4px; border-right: 1px solid #555;">Energy for 0.1%</th>
                         <th style="text-align: right; padding: 4px;">Status</th>
                     </tr>
                 </thead>
@@ -651,6 +651,7 @@
             const currentCount = getEnergyUnitCount(unitName);
             const currentPercentage = getCurrentPercentage(unitName, currentCount, config);
             const improvement = calculatePercentageImprovement(unitName, currentCount, config);
+            const energyNeeded = calculateEnergyNeededForThreshold(unitName, currentCount, config);
             
             // Determine display name
             const displayName = unitName === 'moth' ? 'lepidoptera' : unitName;
@@ -662,7 +663,7 @@
                 <tr style="border-bottom: 1px solid #333;">
                     <td style="text-align: right; padding: 4px; border-right: 1px solid #555; color: #ffdd44;">${displayName}</td>
                     <td style="text-align: right; padding: 4px; border-right: 1px solid #555;">${currentPercentage.toFixed(2)}%</td>
-                    <td style="text-align: right; padding: 4px; border-right: 1px solid #555;">${Math.floor(currentEnergy).toLocaleString()}</td>
+                    <td style="text-align: right; padding: 4px; border-right: 1px solid #555;">${energyNeeded.toLocaleString()}</td>
                     <td style="text-align: right; padding: 4px; color: ${statusColor};">${statusText}</td>
                 </tr>
             `;
