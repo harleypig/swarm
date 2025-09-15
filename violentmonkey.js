@@ -677,6 +677,37 @@
         infoPanel.innerHTML = html;
     }
 
+    // Add this function to calculate energy needed to reach threshold
+    function calculateEnergyNeededForThreshold(unitName, currentCount, config) {
+        const targetImprovement = CONFIG.ENERGY_PERCENTAGE_TARGET;
+        const unitCost = config.cost;
+        
+        // If current improvement is already above threshold, return 0
+        const currentImprovement = calculatePercentageImprovement(unitName, currentCount, config);
+        if (currentImprovement >= targetImprovement) {
+            return 0;
+        }
+        
+        // Binary search to find how many units needed to reach threshold
+        let low = 1;
+        let high = 10000; // reasonable upper bound
+        let result = high * unitCost;
+        
+        while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            const improvement = calculatePercentageImprovement(unitName, currentCount + mid - 1, config);
+            
+            if (improvement >= targetImprovement) {
+                result = mid * unitCost;
+                high = mid - 1;
+            } else {
+                low = mid + 1;
+            }
+        }
+        
+        return result;
+    }
+
     // Buy energy units based on percentage improvement
     async function buyEnergyUnits() {
         console.log('Processing energy units...');
