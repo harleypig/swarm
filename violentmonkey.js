@@ -662,7 +662,7 @@
                 <tr style="border-bottom: 1px solid #333;">
                     <td style="text-align: right; padding: 4px; border-right: 1px solid #555; color: #ffdd44;">${displayName}</td>
                     <td style="text-align: right; padding: 4px; border-right: 1px solid #555;">${currentPercentage.toFixed(2)}%</td>
-                    <td style="text-align: right; padding: 4px; border-right: 1px solid #555;">${currentEnergy.toLocaleString()}</td>
+                    <td style="text-align: right; padding: 4px; border-right: 1px solid #555;">${Math.floor(currentEnergy).toLocaleString()}</td>
                     <td style="text-align: right; padding: 4px; color: ${statusColor};">${statusText}</td>
                 </tr>
             `;
