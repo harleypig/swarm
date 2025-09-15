@@ -48,12 +48,12 @@
         BUTTON_ON_BG_COLOR: '#33cc33',   // Button background color when enabled (darker green)
         BUTTON_BUYING_FG_COLOR: 'white', // Button text color while buying
         BUTTON_BUYING_BG_COLOR: '#ffaa00', // Button background color while buying (orange)
-        
+
         // Event timing settings (in milliseconds)
         EVENT_SEQUENCE_DELAY: 10,        // Delay between individual mouse events in sequence
         DROPDOWN_CLOSE_DELAY: 100,       // Delay before closing dropdown after purchase
         BOOTSTRAP_DROPDOWN_DELAY: 100,   // Delay for Bootstrap dropdown simulation
-        
+
         // Button styling
         BUTTON_PADDING: 10,              // Button padding (pixels)
         BUTTON_MIN_WIDTH: 200,           // Button minimum width (pixels)
@@ -142,7 +142,7 @@
     // Start countdown display and trigger next auto-buy when done
     function startCountdown() {
         if (!isEnabled) return; // Don't start countdown if disabled
-        
+
         if (countdownId) clearInterval(countdownId);
         nextRunTime = Date.now() + CONFIG.AUTO_BUY_INTERVAL;
 
@@ -169,7 +169,7 @@
                     toggleButton.innerHTML = 'Auto buying...';
                     toggleButton.style.background = CONFIG.BUTTON_BUYING_BG_COLOR;
                     toggleButton.style.color = CONFIG.BUTTON_BUYING_FG_COLOR;
-                    
+
                     runAutoBuyer().then(() => {
                         isCurrentlyBuying = false;
                         startCountdown(); // Start countdown for next cycle
@@ -245,7 +245,7 @@
                     await tryBuyMaxForUnit(unitRow);
                     await new Promise(resolve => setTimeout(resolve, CONFIG.BETWEEN_PURCHASES_DELAY));
                 }
-                
+
                 resolve();
             }, CONFIG.TAB_LOAD_DELAY);
         });
@@ -502,7 +502,7 @@
                 // Close dropdown if button not found
                 document.body.click();
             }
-            
+
             resolve(true);
         }, CONFIG.DROPDOWN_OPEN_DELAY * 3); // Increase delay even more
         });
@@ -536,13 +536,13 @@
     function calculatePercentageImprovement(unitName, currentCount, config) {
         const currentWeight = currentCount * config.val2;
         const nextWeight = (currentCount + 1) * config.val2;
-        
+
         const currentMult = 1 + (config.maxVal - 1) * (1 - 1/(1 + currentWeight));
         const nextMult = 1 + (config.maxVal - 1) * (1 - 1/(1 + nextWeight));
-        
+
         const currentPercentage = (currentMult - 1) / (config.maxVal - 1) * 100;
         const nextPercentage = (nextMult - 1) / (config.maxVal - 1) * 100;
-        
+
         return nextPercentage - currentPercentage;
     }
 
@@ -652,7 +652,7 @@
             const currentPercentage = getCurrentPercentage(unitName, currentCount, config);
             const improvement = calculatePercentageImprovement(unitName, currentCount, config);
             const energyNeeded = calculateEnergyNeededForThreshold(unitName, currentCount, config);
-            
+
             // Determine display name
             const displayName = unitName === 'moth' ? 'lepidoptera' : unitName;
             const willBuy = improvement >= CONFIG.ENERGY_PERCENTAGE_TARGET;
@@ -681,22 +681,22 @@
     function calculateEnergyNeededForThreshold(unitName, currentCount, config) {
         const targetImprovement = CONFIG.ENERGY_PERCENTAGE_TARGET;
         const unitCost = config.cost;
-        
+
         // If current improvement is already above threshold, return 0
         const currentImprovement = calculatePercentageImprovement(unitName, currentCount, config);
         if (currentImprovement >= targetImprovement) {
             return 0;
         }
-        
+
         // Binary search to find how many units needed to reach threshold
         let low = 1;
         let high = 10000; // reasonable upper bound
         let result = high * unitCost;
-        
+
         while (low <= high) {
             const mid = Math.floor((low + high) / 2);
             const improvement = calculatePercentageImprovement(unitName, currentCount + mid - 1, config);
-            
+
             if (improvement >= targetImprovement) {
                 result = mid * unitCost;
                 high = mid - 1;
@@ -704,33 +704,33 @@
                 low = mid + 1;
             }
         }
-        
+
         return result;
     }
 
     // Buy energy units based on percentage improvement
     async function buyEnergyUnits() {
         console.log('Processing energy units...');
-        
+
         const energyTab = findTab('energy');
         if (!energyTab) return;
-        
+
         energyTab.click();
         await new Promise(resolve => setTimeout(resolve, CONFIG.TAB_LOAD_DELAY));
-        
+
         // Update info panel before processing
         updateInfoPanel();
-        
+
         const unitRows = document.querySelectorAll('tr[ng-repeat="unit in cur.tab.sortUnits() | filter:filterVisible track by unit.name"]');
-        
+
         for (const unitRow of unitRows) {
             const unitName = getUnitNameFromRow(unitRow);
             const config = CONFIG.ENERGY_UNITS[unitName];
-            
+
             if (config) {
                 const currentCount = getCurrentUnitCount(unitRow);
                 const improvement = calculatePercentageImprovement(unitName, currentCount, config);
-                
+
                 if (improvement >= CONFIG.ENERGY_PERCENTAGE_TARGET) {
                     console.log(`${unitName}: ${improvement.toFixed(3)}% improvement available`);
                     await tryBuyMaxForUnit(unitRow);
@@ -738,7 +738,7 @@
                 }
             }
         }
-        
+
         // Update info panel after processing
         updateInfoPanel();
     }
