@@ -91,21 +91,33 @@
 
         toggleButton.addEventListener('click', toggleAutoBuyer);
         document.body.appendChild(toggleButton);
+
+        // Create info panel
+        createInfoPanel();
     }
 
     // Toggle auto-buyer on/off
     function toggleAutoBuyer() {
         isEnabled = !isEnabled;
 
+        const infoPanel = document.getElementById('energy-units-info');
+
         if (isEnabled) {
             startAutoBuyer();
             startCountdown();
+            if (infoPanel) {
+                infoPanel.style.display = 'block';
+                updateInfoPanel();
+            }
         } else {
             toggleButton.innerHTML = 'Auto-Buyer: OFF';
             toggleButton.style.background = CONFIG.BUTTON_OFF_BG_COLOR;
             toggleButton.style.color = CONFIG.BUTTON_OFF_FG_COLOR;
             stopAutoBuyer();
             stopCountdown();
+            if (infoPanel) {
+                infoPanel.style.display = 'none';
+            }
         }
     }
 
@@ -534,6 +546,136 @@
         return nextPercentage - currentPercentage;
     }
 
+    // Add this function to create and update the info panel
+    function createInfoPanel() {
+        // Remove existing panel if it exists
+        const existingPanel = document.getElementById('energy-units-info');
+        if (existingPanel) {
+            existingPanel.remove();
+        }
+
+        const infoPanel = document.createElement('div');
+        infoPanel.id = 'energy-units-info';
+        infoPanel.style.cssText = `
+            position: fixed;
+            top: ${CONFIG.BUTTON_TOP_POSITION + 60}px;
+            right: ${CONFIG.BUTTON_RIGHT_POSITION}px;
+            z-index: ${CONFIG.BUTTON_Z_INDEX - 1};
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: 1px solid #ccc;
+            border-radius: ${CONFIG.BUTTON_BORDER_RADIUS}px;
+            font-family: monospace;
+            font-size: 12px;
+            min-width: ${CONFIG.BUTTON_MIN_WIDTH}px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        `;
+
+        document.body.appendChild(infoPanel);
+        return infoPanel;
+    }
+
+    // Add this function to get current unit count from the game
+    function getEnergyUnitCount(unitName) {
+        try {
+            // Try to access Angular scope to get unit counts
+            const energyTab = document.querySelector('a[href="#/tab/energy"]');
+            if (energyTab) {
+                const scope = angular.element(energyTab).scope();
+                if (scope && scope.game) {
+                    const unit = scope.game.unit(unitName);
+                    if (unit) {
+                        return unit.count().toNumber();
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Could not get unit count from game scope:', e);
+        }
+        return 0;
+    }
+
+    // Add this function to get current energy amount
+    function getCurrentEnergy() {
+        try {
+            const energyTab = document.querySelector('a[href="#/tab/energy"]');
+            if (energyTab) {
+                const scope = angular.element(energyTab).scope();
+                if (scope && scope.game) {
+                    const energyUnit = scope.game.unit('energy');
+                    if (energyUnit) {
+                        return energyUnit.count().toNumber();
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Could not get energy count from game scope:', e);
+        }
+        return 0;
+    }
+
+    // Add this function to calculate current percentage
+    function getCurrentPercentage(unitName, count, config) {
+        const weight = count * config.val2;
+        const multiplier = 1 + (config.maxVal - 1) * (1 - 1/(1 + weight));
+        return (multiplier - 1) / (config.maxVal - 1) * 100;
+    }
+
+    // Add this function to update the info panel
+    function updateInfoPanel() {
+        if (!isEnabled) return;
+
+        const infoPanel = document.getElementById('energy-units-info');
+        if (!infoPanel) return;
+
+        const currentEnergy = getCurrentEnergy();
+
+        let html = `
+            <div style="font-weight: bold; margin-bottom: 10px; text-align: center;">Energy Units Status:</div>
+            <table style="width: 100%; border-collapse: collapse; font-family: monospace;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #555;">
+                        <th style="text-align: right; padding: 4px; border-right: 1px solid #555;">Unit</th>
+                        <th style="text-align: right; padding: 4px; border-right: 1px solid #555;">Current %</th>
+                        <th style="text-align: right; padding: 4px; border-right: 1px solid #555;">Energy Need</th>
+                        <th style="text-align: right; padding: 4px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        for (const [unitName, config] of Object.entries(CONFIG.ENERGY_UNITS)) {
+            const currentCount = getEnergyUnitCount(unitName);
+            const currentPercentage = getCurrentPercentage(unitName, currentCount, config);
+            const improvement = calculatePercentageImprovement(unitName, currentCount, config);
+            
+            // Determine display name
+            const displayName = unitName === 'moth' ? 'lepidoptera' : unitName;
+            const willBuy = improvement >= CONFIG.ENERGY_PERCENTAGE_TARGET;
+            const statusColor = willBuy ? '#44ff44' : '#ff4444';
+            const statusText = willBuy ? 'Will buy' : 'Will skip';
+
+            html += `
+                <tr style="border-bottom: 1px solid #333;">
+                    <td style="text-align: right; padding: 4px; border-right: 1px solid #555; color: #ffdd44;">${displayName}</td>
+                    <td style="text-align: right; padding: 4px; border-right: 1px solid #555;">${currentPercentage.toFixed(2)}%</td>
+                    <td style="text-align: right; padding: 4px; border-right: 1px solid #555;">${currentEnergy.toLocaleString()}</td>
+                    <td style="text-align: right; padding: 4px; color: ${statusColor};">${statusText}</td>
+                </tr>
+            `;
+        }
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        infoPanel.innerHTML = html;
+    }
+
     // Buy energy units based on percentage improvement
     async function buyEnergyUnits() {
         console.log('Processing energy units...');
@@ -543,6 +685,9 @@
         
         energyTab.click();
         await new Promise(resolve => setTimeout(resolve, CONFIG.TAB_LOAD_DELAY));
+        
+        // Update info panel before processing
+        updateInfoPanel();
         
         const unitRows = document.querySelectorAll('tr[ng-repeat="unit in cur.tab.sortUnits() | filter:filterVisible track by unit.name"]');
         
@@ -561,6 +706,9 @@
                 }
             }
         }
+        
+        // Update info panel after processing
+        updateInfoPanel();
     }
 
     // Buy upgrades using the "Buy all upgrades" button
